@@ -6,3 +6,6 @@ core
 *.hi
 *.o
 *~
+start_programming
+programming_session.log
+.ghci
