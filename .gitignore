@@ -1,0 +1,8 @@
+.stack-work/
+dist-new/
+# icfpc2022.cabal
+*.log
+core
+*.hi
+*.o
+*~

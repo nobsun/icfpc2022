@@ -1,0 +1,98 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           icfpc2022
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/nobsun/icfpc2022#readme>
+homepage:       https://github.com/nobsun/icfpc2022#readme
+bug-reports:    https://github.com/nobsun/icfpc2022/issues
+author:         Nobuo Yamashita
+maintainer:     nobsun@sampou.org
+copyright:      Copyright: (c) 2022 Nobuo Yamashita
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/nobsun/icfpc2022
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , hspec
+    , main-tester
+    , time
+    , unicode-show
+    , utf8-string
+  default-language: Haskell2010
+
+executable icfpc2022
+  main-is: Main.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      app
+  ghc-options: -rtsopts
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , hspec
+    , icfpc2022
+    , main-tester
+    , time
+    , unicode-show
+    , utf8-string
+  default-language: Haskell2010
+
+test-suite icfpc2022-doctest
+  type: exitcode-stdio-1.0
+  main-is: doctests.hs
+  other-modules:
+      LibSpec
+      Paths_icfpc2022
+  hs-source-dirs:
+      test
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , doctest
+    , hspec
+    , icfpc2022
+    , main-tester
+    , time
+    , unicode-show
+    , utf8-string
+  default-language: Haskell2010
+
+test-suite icfpc2022-test
+  type: exitcode-stdio-1.0
+  main-is: spec.hs
+  other-modules:
+      LibSpec
+      Paths_icfpc2022
+  hs-source-dirs:
+      test
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , hspec
+    , icfpc2022
+    , main-tester
+    , time
+    , unicode-show
+    , utf8-string
+  default-language: Haskell2010
