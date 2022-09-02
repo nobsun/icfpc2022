@@ -22,10 +22,8 @@ type Width  = Int
 type Height = Int
 type Shape = (Width, Height)
 
-data SimpleBlock  = SimpleBlock BlockID Shape Color deriving (Show, Eq)
-
-data Block = Leaf SimpleBlock       -- ^ SimpleBlock
-           | Node (Shape, [Block])  -- ^ ComplexBlock
+data Block = Leaf (BlockID, Shape, Color)       -- ^ SimpleBlock
+           | Node (Shape, [Block])              -- ^ ComplexBlock
            deriving (Show, Eq)
 
 -- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
@@ -40,19 +38,19 @@ data Block = Leaf SimpleBlock       -- ^ SimpleBlock
 --          X  <---------------- A + [X]
 --                  [f, g]
 --        
--- >>> let b = Leaf (SimpleBlock [0] (400, 400) White)
+-- >>> let b = Leaf ([0], (400, 400), White)
 -- >>> cataBlock Leaf Node b == b
 -- >>> True
 --
--- >>> let l = Leaf (SimpleBlock [0, 0] (200, 400) White)
--- >>> let r = Leaf (SimpleBlock [0, 1] (200, 400) White)
+-- >>> let l = Leaf ([0, 0], (200, 400), White)
+-- >>> let r = Leaf ([0, 1], (200, 400), White)
 -- >>> let b = Node ((400, 400), [l, r])
 -- >>> cataBlock Leaf Node b == b
 -- >>> True
-cataBlock :: (SimpleBlock -> a) -> ((Shape, [a]) -> a) -> Block -> a
+cataBlock :: ((BlockID, Shape, Color) -> a) -> ((Shape, [a]) -> a) -> Block -> a
 cataBlock f g = u
   where
-    u (Leaf b)       = f b
+    u (Leaf a)       = f a
     u (Node (s, bs)) = g (s, map u bs)
 
 -- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
@@ -72,16 +70,16 @@ cataBlock f g = u
 -- >>> psi (Node b) = Right b
 -- >>> :}
 --
--- >>> let b = Leaf (SimpleBlock [0] (400, 400) White)
+-- >>> let b = Leaf ([0], (400, 400), White)
 -- >>> anaBlock psi b == b
 -- >>> True
 --
--- >>> let l = Leaf (SimpleBlock [0, 0] (200, 400) White)
--- >>> let r = Leaf (SimpleBlock [0, 1] (200, 400) White)
+-- >>> let l = Leaf ([0, 0], (200, 400), White)
+-- >>> let r = Leaf ([0, 1], (200, 400), White)
 -- >>> let b = Node ((400, 400), [l, r])
 -- >>> anaBlock psi b == b
 -- >>> True
-anaBlock :: (a -> Either SimpleBlock (Shape, [a])) -> a -> Block
+anaBlock :: (a -> Either (BlockID, Shape, Color) (Shape, [a])) -> a -> Block
 anaBlock psi = v
   where
     v x = case psi x of
