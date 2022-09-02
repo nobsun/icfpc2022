@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Sandbox
   other-modules:
       Paths_icfpc2022
   hs-source-dirs:
