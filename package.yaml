@@ -27,6 +27,10 @@ dependencies:
 - time
 - hspec
 - main-tester
+- gloss
+- containers
+- array
+- vector
 
 library:
   source-dirs: src
