@@ -67,6 +67,20 @@ cataBlock f g = u
 --          X  ----------------> A + [X]
 --                  psi
 --
+-- >>> :{
+-- >>> psi (Leaf a) = Left a
+-- >>> psi (Node b) = Right b
+-- >>> :}
+--
+-- >>> let b = Leaf (SimpleBlock [0] (400, 400) White)
+-- >>> anaBlock psi b == b
+-- >>> True
+--
+-- >>> let l = Leaf (SimpleBlock [0, 0] (200, 400) White)
+-- >>> let r = Leaf (SimpleBlock [0, 1] (200, 400) White)
+-- >>> let b = Node ((400, 400), [l, r])
+-- >>> anaBlock psi b == b
+-- >>> True
 anaBlock :: (a -> Either SimpleBlock (Shape, [a])) -> a -> Block
 anaBlock psi = v
   where
