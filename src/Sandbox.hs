@@ -90,12 +90,12 @@ anaBlock psi = v
 
 -- Vertical   : 垂直線を引いてカットつまり横に分割
 -- Horizontal : 水平線を引いてカットつまり縦に分割
-data Direction = Vertical | Horizontal deriving (Show, Eq)
+data Orientation = Vertical | Horizontal deriving (Show, Eq)
 -- 幅とか高さ
 type Size = Int
 
 -- Line
-type Line = (Direction, Size)
+type Line = (Orientation, Size)
 
 -- 座標
 type X = Int
