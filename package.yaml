@@ -56,6 +56,16 @@ executables:
     dependencies:
     - icfpc2022
     - JuicyPixels
+  mosaic-color:
+    main:                Main.hs
+    source-dirs:         app/mosaic-color
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
+    - JuicyPixels
 
 tests:
   icfpc2022-test:

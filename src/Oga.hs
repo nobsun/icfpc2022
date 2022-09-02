@@ -3,7 +3,7 @@
 module Oga where
 
 import Control.Monad.State.Lazy
-import Data.List (sortBy)
+import Data.List (sortBy,intercalate)
 import Data.Ord (comparing)
 import qualified Data.Map.Lazy as Map
 
@@ -47,6 +47,8 @@ initialBlock = B
   , bOrder   = 0
   , bCounter = 1
   , bPaints  = Map.empty
+  , bHistory = []
+  , bMerge   = []
   }
 
 --------------------------------------
@@ -57,7 +59,9 @@ programS prog =
 
 programLineS :: ProgramLine -> BState ()
 programLineS (Comment s) = return ()
-programLineS (Move m) = moveS m
+programLineS (Move m) = do
+  modify (\b@B{bHistory=bHistory}-> b{bHistory=(Move m:bHistory)})
+  moveS m
 
 
 moveS :: Move -> BState ()
@@ -124,6 +128,8 @@ data B = B
   , bOrder   :: Int
   , bCounter :: Int
   , bPaints  :: Map.Map [Int] Paint
+  , bHistory :: Program
+  , bMerge   :: [[Int]]
   }
   deriving Show
 
@@ -148,7 +154,10 @@ type Program = [ProgramLine]
 data ProgramLine
   = Comment String
   | Move Move
-  deriving Show
+
+instance Show ProgramLine where
+  show (Comment s) = "# " ++ s
+  show (Move m) = show m
 
 data Move
   = PCutMove Block Point
@@ -156,21 +165,44 @@ data Move
   | ColorMove Block Color
   | SwapMove Block Block
   | MergeMove Block Block
-  deriving Show
+
+instance Show Move where
+  show (PCutMove block p)
+       = "cut" ++ show block ++ show p
+  show (LCutMove block orient linum)
+       = "cut" ++ show block ++ show orient ++ show linum
+  show (ColorMove block color)
+       = "color" ++ show block ++ show color
+  show (SwapMove block1 block2)
+       = "swap" ++ show block1 ++ show block2
+  show (MergeMove block1 block2)
+       = "merge" ++ show block1 ++ show block2
 
 data Orientation
   = Vertical
   | Horizontal
-  deriving Show
+
+instance Show Orientation where
+  show Vertical = "X"
+  show Horizontal = "Y"
 
 data LineNumber = LineNumber Int
-  deriving Show
+
+instance Show LineNumber where
+  show (LineNumber num) = "["++show num++"]"
 
 data Block = BlockId [Int]
-  deriving Show
+
+instance Show Block where
+  show (BlockId bid) = "["++(intercalate "." $ map show $ reverse bid)++"]"
 
 data Point = Point Int Int
-  deriving Show
+
+instance Show Point where
+  show (Point x y) = "["++show x++","++show y++"]"
 
 data Color = Color Int Int Int Int
-  deriving Show
+
+instance Show Color where
+  show (Color r g b a) = "["++show r++","++show g++","++show b++","++show a++"]"
+
