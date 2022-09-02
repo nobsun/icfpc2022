@@ -45,6 +45,16 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+  average-color:
+    main:                Main.hs
+    source-dirs:         app/average-color
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
+    - JuicyPixels
 
 tests:
   icfpc2022-test:
