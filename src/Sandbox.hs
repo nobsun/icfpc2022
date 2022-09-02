@@ -30,12 +30,13 @@ data Block = Leaf SimpleBlock       -- ^ SimpleBlock
 
 -- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
 --
---                  [leaf, node]
+--                [leaf, node]
 --          T  <---------------- A + [T]
+--          |                      |
 --          |                      |
 --  (|f, g|)|                      | 1_A + map (|f, g|)
 --          |                      |
---          |                      |
+--          v                      v
 --          X  <---------------- A + [X]
 --                  [f, g]
 --        
@@ -53,6 +54,25 @@ cataBlock f g = u
   where
     u (Leaf b)       = f b
     u (Node (s, bs)) = g (s, map u bs)
+
+-- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
+--
+--                [leaf, node]
+--          T  <---------------- A + [T]
+--          ^                      ^
+--          |                      |
+--  [(psi)] |                      | 1_A + map [(psi)]
+--          |                      |
+--          |                      |
+--          X  ----------------> A + [X]
+--                  psi
+--
+anaBlock :: (a -> Either SimpleBlock (Shape, [a])) -> a -> Block
+anaBlock psi = v
+  where
+    v x = case psi x of
+      Left  b       -> Leaf b
+      Right (s, xs) -> Node (s, map v xs)
 
 -- | moves
 
