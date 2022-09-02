@@ -40,13 +40,13 @@ data Block = Leaf (BlockID, Shape, Color)       -- ^ SimpleBlock
 --        
 -- >>> let b = Leaf ([0], (400, 400), White)
 -- >>> cataBlock Leaf Node b == b
--- >>> True
+-- True
 --
 -- >>> let l = Leaf ([0, 0], (200, 400), White)
 -- >>> let r = Leaf ([0, 1], (200, 400), White)
 -- >>> let b = Node ((400, 400), [l, r])
 -- >>> cataBlock Leaf Node b == b
--- >>> True
+-- True
 cataBlock :: ((BlockID, Shape, Color) -> a) -> ((Shape, [a]) -> a) -> Block -> a
 cataBlock f g = u
   where
@@ -72,13 +72,13 @@ cataBlock f g = u
 --
 -- >>> let b = Leaf ([0], (400, 400), White)
 -- >>> anaBlock psi b == b
--- >>> True
+-- True
 --
 -- >>> let l = Leaf ([0, 0], (200, 400), White)
 -- >>> let r = Leaf ([0, 1], (200, 400), White)
 -- >>> let b = Node ((400, 400), [l, r])
 -- >>> anaBlock psi b == b
--- >>> True
+-- True
 anaBlock :: (a -> Either (BlockID, Shape, Color) (Shape, [a])) -> a -> Block
 anaBlock psi = v
   where
