@@ -39,11 +39,8 @@ interp pl world = case pl of
 
 
 lcut :: BlockId -> Orientation -> Offset -> Instruction
-lcut bid o off = \ case
-    World { blocks  = tbl0
-          } -> case o of
-            X -> World { blocks = tbl2
-                       }
+lcut bid o off world = case world of
+    World { blocks  = tbl0 } -> world { blocks = tbl2 }
         where
             (bid1, block1) = (0:bid, SimpleBlock shp1 col)
             (bid2, block2) = (1:bid, SimpleBlock shp2 col)
@@ -62,8 +59,6 @@ lcut bid o off = \ case
                              }
             tbl1 = Map.insert bid1 block1 tbl0
             tbl2 = Map.insert bid2 block2 tbl1
-
-
 
 pcut :: BlockId -> Point -> Instruction
 pcut = undefined
