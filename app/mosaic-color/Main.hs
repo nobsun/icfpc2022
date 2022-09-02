@@ -22,20 +22,6 @@ mosaicS depth img bid = do
       (mx,my) = ((bx+tx)`div`2, (by+ty)`div`2)
   programLineS (Move (PCutMove (BlockId bid) (Point mx my)))
   mapM_ (mosaicS (depth-1) img) [0:bid, 1:bid, 2:bid, 3:bid]
-  if depth == 1 then do
-    programLineS (Move (MergeMove (BlockId (0:bid)) (BlockId (1:bid))))
-    programLineS (Move (MergeMove (BlockId (2:bid)) (BlockId (3:bid))))
-    B{bCounter=bCounter} <- get
-    programLineS (Move (MergeMove (BlockId [bCounter-2]) (BlockId [bCounter-1])))
-    modify (\b@B{bMerge=ms}-> b{bMerge=([bCounter]:ms)})
-  else do
-    B{bMerge=bMerge} <- get
-    let (a:b:c:d:ms) = bMerge
-    programLineS (Move (MergeMove (BlockId a) (BlockId b)))
-    programLineS (Move (MergeMove (BlockId c) (BlockId d)))
-    B{bCounter=bCounter} <- get
-    programLineS (Move (MergeMove (BlockId [bCounter-2]) (BlockId [bCounter-1])))
-    modify (\b-> b{bMerge=([bCounter]:ms)})
 
 
 
@@ -61,5 +47,5 @@ main = do
   Right dynImg <- readImage fname
   case dynImg of
     ImageRGBA8 img -> do
-      mapM_ print $ reverse $ bHistory $ execState (mosaicS 9 img [0]) initialBlock
+      mapM_ print $ reverse $ bHistory $ execState (mosaicS 6 img [0]) initialBlock
 
