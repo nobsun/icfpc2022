@@ -185,3 +185,10 @@ incCount world = (cnt, world { counter = succ cnt })
         cnt = counter world
 
 type Instruction = World -> World
+
+
+
+loadISL :: FilePath -> IO [Move]
+loadISL fname = do
+  s <- readFile fname
+  return [read l | l <- lines s, not ("#" `isPrefixOf` l)]
