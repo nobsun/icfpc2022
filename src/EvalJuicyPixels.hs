@@ -2,6 +2,7 @@ module EvalJuicyPixels
   ( evalISL
   , evalISLWithCost
   , similarity
+  , pixelDiff
   ) where
 
 import Codec.Picture
@@ -244,14 +245,15 @@ similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight
   where
     alpha = 0.005
 
-    pixelDiff :: PixelRGBA8 -> PixelRGBA8 -> Double
-    pixelDiff (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
-      sqrt $ sum
-        [ (fromIntegral r1 - fromIntegral r2)^(2::Int)
-        , (fromIntegral g1 - fromIntegral g2)^(2::Int)
-        , (fromIntegral b1 - fromIntegral b2)^(2::Int)
-        , (fromIntegral a1 - fromIntegral a2)^(2::Int)
-        ]
+
+pixelDiff :: PixelRGBA8 -> PixelRGBA8 -> Double
+pixelDiff (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
+  sqrt $ sum
+    [ (fromIntegral r1 - fromIntegral r2)^(2::Int)
+    , (fromIntegral g1 - fromIntegral g2)^(2::Int)
+    , (fromIntegral b1 - fromIntegral b2)^(2::Int)
+    , (fromIntegral a1 - fromIntegral a2)^(2::Int)
+    ]
 
 
 -- Haskell の round は偶数丸めだが、JavascriptのMath.roundは四捨五入なので、それに合わせる
