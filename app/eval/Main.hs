@@ -58,7 +58,10 @@ main = do
         return (Just img, (imageWidth img, imageHeight img))
 
   moves <- loadISL (optInput opt)
-  let (img, cost) = evalISLWithCost size moves
+  (img, cost) <-
+    case evalISLWithCost size moves of
+      Left err -> fail err
+      Right (img, cost) -> return (img, cost)
 
   putStrLn $ "ISL code cost: " ++ show cost
   sim <-
