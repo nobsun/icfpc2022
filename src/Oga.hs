@@ -88,6 +88,16 @@ moveS (LCutMove (BlockId bid) Vertical (LineNumber x)) = do
         ]
   modify (\b-> b{bBlocks=bBlocks'})
 
+moveS (LCutMove (BlockId bid) Horizontal (LineNumber y)) = do
+  B{bBlocks=bBlocks} <- get
+  let ((bx,by),(tx,ty)) = bBlocks Map.! bid
+      bBlocks' = foldr ($) bBlocks
+        [Map.insert (0:bid) ((bx,by),(tx,y))
+        ,Map.insert (1:bid) ((bx,y),(tx,ty))
+        ,Map.delete bid
+        ]
+  modify (\b-> b{bBlocks=bBlocks'})
+
 
 moveS (ColorMove (BlockId bid) (Color r g b a)) = do
   B{bBlocks=bBlocks, bOrder=bOrder, bPaints=bPaints} <- get
