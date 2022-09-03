@@ -193,8 +193,8 @@ data Orientation
   | Horizontal
 
 instance Show Orientation where
-  show Vertical = "X"
-  show Horizontal = "Y"
+  show Vertical = "[X]"
+  show Horizontal = "[Y]"
 
 data LineNumber = LineNumber Int
 
