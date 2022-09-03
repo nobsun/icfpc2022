@@ -1,9 +1,11 @@
 module EvalJuicyPixels
   ( evalISL
+  , similarity
   ) where
 
 import Codec.Picture
 import Codec.Picture.Types
+import Control.Exception (assert)
 import Control.Monad
 import Control.Monad.Primitive
 import Control.Monad.RWS
@@ -210,3 +212,32 @@ sampleMoves =
 
 
 test = writePng "test.png" $ evalISL (400, 400) sampleMoves
+
+
+similarity :: Image PixelRGBA8 -> Image PixelRGBA8 -> Integer
+similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight img1 == imageHeight img2) $
+  round $ (alpha *) $ sum $
+    [ pixelDiff p1 p2
+    | y <- [0 .. imageHeight img1 - 1]
+    , x <- [0 .. imageWidth img1 - 1]
+    , let p1 = pixelAt img1 x y, let p2 = pixelAt img2 x y
+    ]
+  where
+    alpha = 0.005
+
+    pixelDiff :: PixelRGBA8 -> PixelRGBA8 -> Double
+    pixelDiff (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
+      sqrt $ sum
+        [ (fromIntegral r1 - fromIntegral r2)^(2::Int)
+        , (fromIntegral g1 - fromIntegral g2)^(2::Int)
+        , (fromIntegral b1 - fromIntegral b2)^(2::Int)
+        , (fromIntegral a1 - fromIntegral a2)^(2::Int)
+        ]
+
+
+test_similarity = do
+  Right (ImageRGBA8 img1) <- readImage "probs/1.png"
+  let img2 = evalISL (400, 400) sampleMoves
+  print (similarity img1 img1)
+  print (similarity img2 img2)
+  print (similarity img1 img2)
