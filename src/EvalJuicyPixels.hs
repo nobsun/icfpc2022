@@ -10,7 +10,7 @@ import Codec.Picture.Types
 import Control.Exception (assert)
 import Control.Monad
 import Control.Monad.Primitive
-import Control.Monad.RWS
+import Control.Monad.RWS.Strict
 import Control.Monad.ST
 import Data.List (isPrefixOf)
 import qualified Data.Map.Strict as Map
