@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 20634511b3d6f11fdb15760ceb8ec31f846566129dfb063e2c80720e3f5ed400
+-- hash: 725d0ccc1f255bf3e8d108e21c6d5e531511cdffb8fdc3cc6e4094b1540fa3a2
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -72,6 +72,32 @@ executable average-color
     , icfpc2022
     , main-tester
     , mtl
+    , primitive
+    , time
+    , unicode-show
+    , utf8-string
+    , vector
+  default-language: Haskell2010
+
+executable eval
+  main-is: Main.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      app/eval
+  ghc-options: -rtsopts
+  build-depends:
+      JuicyPixels
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , gloss
+    , hspec
+    , icfpc2022
+    , main-tester
+    , mtl
+    , optparse-applicative
     , primitive
     , time
     , unicode-show

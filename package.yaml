@@ -66,6 +66,16 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+  eval:
+    main:                Main.hs
+    source-dirs:         app/eval
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
+    - optparse-applicative
 
 tests:
   icfpc2022-test:
