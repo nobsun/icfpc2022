@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Types where
 
+import Data.Char
 import qualified Data.Map as Map
 import Data.List
 import qualified Data.Set as Set
@@ -40,10 +41,10 @@ instance {-# Overlapping #-} Read BlockId where
     readsPrec _ = readP_to_S rBlockId
 
 rBlockId :: ReadP BlockId
-rBlockId = reverse <$> sepBy1 rInt (char '.')
+rBlockId = rBracket (reverse <$> sepBy1 rInt (char '.'))
 
 rInt :: ReadP Int
-rInt = readS_to_P reads
+rInt = read <$> many1 (satisfy isDigit)
 
 data Orientation
     = X
@@ -51,7 +52,7 @@ data Orientation
     deriving (Eq, Show, Read)
 
 rOrientation :: ReadP Orientation
-rOrientation = readS_to_P reads
+rOrientation = rBracket $ ((char 'X' +++ char 'x') *> pure X) +++ ((char 'Y' +++ char 'y') *> pure Y)
 
 type Offset = Int
 type Point = (Int, Int)
@@ -65,37 +66,37 @@ data Move
     deriving (Eq, Show)
 
 instance Read Move where
-    readsPrec _ = readP_to_S rMove
+    readsPrec _ = readP_to_S (skipSpaces *> rMove)
 
 rMove :: ReadP Move
 rMove = rLCutMove +++ rPCutMove +++ rColorMove +++ rSwapMove +++ rMergeMove
 
 rLCutMove :: ReadP Move
-rLCutMove = LCUT <$> rBlockId <*> rOrientation <*> rOffset
+rLCutMove = LCUT <$> (string "cut" *> skipSpaces *> rBlockId) <*> rOrientation <*> rOffset
 
 rBracket :: ReadP a -> ReadP a
-rBracket = between (char '[') (char ']')
+rBracket p = between (char '[' <* skipSpaces) (char ']') p <* skipSpaces
 
 rOffset :: ReadP Offset
-rOffset = between (char '[') (char ']') (readS_to_P reads)
+rOffset = rBracket (readS_to_P reads)
 
 rPCutMove :: ReadP Move
-rPCutMove = PCUT <$> rBlockId <*> rPoint
+rPCutMove = PCUT <$> (string "cut" *> skipSpaces *> rBlockId) <*> rPoint
 
 rPoint :: ReadP Point
-rPoint = rBracket ((,) <$> rInt <* char ',' <*> rInt)
+rPoint = rBracket ((,) <$> rInt <* char ',' <* skipSpaces <*> rInt)
 
 rColorMove :: ReadP Move
-rColorMove = COLOR <$> rBlockId <*> rColor
+rColorMove = COLOR <$> (string "color" *> skipSpaces *> rBlockId) <*> rColor
 
 rColor :: ReadP Color
-rColor = readS_to_P reads
+rColor = rBracket ((,,,) <$> rInt <* (char ',' <* skipSpaces) <*> rInt <* (char ',' <* skipSpaces) <*> rInt <* (char ',' <* skipSpaces) <*> rInt)
 
 rSwapMove :: ReadP Move
-rSwapMove = SWAP <$> rBlockId <*> rBlockId
+rSwapMove = SWAP <$> (string "swap" *> skipSpaces *> rBlockId) <*> rBlockId
 
 rMergeMove :: ReadP Move
-rMergeMove = MERGE <$> rBlockId <*> rBlockId
+rMergeMove = MERGE <$> (string "merge" *> skipSpaces *> rBlockId) <*> rBlockId
 
 -- ProgLine
 
