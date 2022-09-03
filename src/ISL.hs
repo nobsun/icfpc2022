@@ -37,10 +37,15 @@ interp pl world = case pl of
         SWAP bid1 bid2 -> swapmove bid1 bid2 world
         MERGE bid1 bid2 -> mergemove bid1 bid2 world
 
-
+{- | lcut
+>>> lcut [0] X 100 (initialWorld [])
+fromList [([0,0],SimpleBlock {shape = Rectangle {leftBottom = (0,0), rightUpper = (100,400)}, blockColor = (255,255,255,255)}),([1,0],SimpleBlock {shape = Rectangle {leftBottom = (100,0), rightUpper = (400,400)}, blockColor = (255,255,255,255)})]
+>>> lcut [0] Y 100 (initialWorld [])
+fromList [([0,0],SimpleBlock {shape = Rectangle {leftBottom = (0,0), rightUpper = (400,100)}, blockColor = (255,255,255,255)}),([1,0],SimpleBlock {shape = Rectangle {leftBottom = (0,100), rightUpper = (400,400)}, blockColor = (255,255,255,255)})]
+-}
 lcut :: BlockId -> Orientation -> Offset -> Instruction
 lcut bid o off world = case world of
-    World { blocks  = tbl0 } -> world { blocks = tbl2 }
+    World { blocks  = tbl0 } -> world { blocks = tbl3 }
         where
             (bid1, block1) = (0:bid, SimpleBlock shp1 col)
             (bid2, block2) = (1:bid, SimpleBlock shp2 col)
@@ -59,11 +64,21 @@ lcut bid o off world = case world of
                              }
             tbl1 = Map.insert bid1 block1 tbl0
             tbl2 = Map.insert bid2 block2 tbl1
+            tbl3 = Map.delete bid tbl2
 
 pcut :: BlockId -> Point -> Instruction
-pcut = undefined
+pcut bid pos world = case world of
+    World { } -> undefined
 
-colormove = undefined
-swapmove = undefined
-mergemove = undefined
+colormove :: BlockId -> Color -> Instruction
+colormove bid (r,g,b,a) world = case world of
+    World {} -> undefined
+
+swapmove :: BlockId -> BlockId -> Instruction
+swapmove bid1 bid2 world = case world of
+    World {} -> undefined
+
+mergemove :: BlockId -> BlockId -> Instruction
+mergemove bid1 bid2 world = case world of
+    World {} -> undefined
 

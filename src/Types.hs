@@ -159,6 +159,10 @@ data World
     , pict        :: Gloss.Picture
     }
 
+instance Show World where
+    showsPrec _ = \ case
+        wolrd@(World { blocks = btbl }) -> shows btbl
+
 initialWorld :: [Instruction] -> World
 initialWorld is
     = World
