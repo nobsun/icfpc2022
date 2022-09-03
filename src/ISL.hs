@@ -50,7 +50,7 @@ interp pl world = case pl of
 -}
 lcut :: BlockId -> Orientation -> Offset -> Instruction
 lcut bid o off world = case world of
-    World { canvas = cnvs, blocks  = tbl0, costs = cs } -> world { blocks = tbl3, costs = c:cs }
+    World { canvas = cnvs, blocks  = tbl0, costs = tc } -> world { blocks = tbl3, costs = tc + c }
         where
             b0@(bid0, block0) = (0:bid, SimpleBlock shp0 col)
             b1@(bid1, block1) = (1:bid, SimpleBlock shp1 col)
@@ -70,7 +70,7 @@ lcut bid o off world = case world of
             tbl1 = uncurry Map.insert b0 tbl0
             tbl2 = uncurry Map.insert b1 tbl1
             tbl3 = Map.delete bid tbl2
-            c = cost (size cnvs) 7 tbl0 bid
+            c = cost (size cnvs) 7 (shape block)
 
 {- | pcut : Point Cut Move instruction
 >>> bs  = [([1], SimpleBlock (Rectangle (0,0) (40, 50)) green), ([2], SimpleBlock (Rectangle (0,50) (40, 400)) red), ([3], SimpleBlock (Rectangle (40,0) (400, 400)) white)]
@@ -93,7 +93,7 @@ lcut bid o off world = case world of
 -}
 pcut :: BlockId -> Point -> Instruction
 pcut bid (mx,my) world = case world of
-    World { canvas = cnvs, blocks = tbl0, costs = cs } -> world { blocks = tbl2, costs = c:cs }
+    World { canvas = cnvs, blocks = tbl0, costs = tc } -> world { blocks = tbl2, costs = tc + c }
         where
             b0@(bid0, block0) = (0:bid, SimpleBlock shp0 col)
             b1@(bid1, block1) = (1:bid, SimpleBlock shp1 col)
@@ -109,14 +109,14 @@ pcut bid (mx,my) world = case world of
             shp3 = Rectangle (x0,my) (mx,y1)
             tbl1 = foldr (uncurry Map.insert) tbl0 [b0, b1, b2, b3]
             tbl2 = Map.delete bid tbl1 
-            c = cost (size cnvs) 10 tbl0 bid
+            c = cost (size cnvs) 10 (shape block)
 
 colormove :: BlockId -> Color -> Instruction
 colormove bid col world = case world of
-    World { canvas = cvs, blocks = tbl0, costs = cs } 
-        -> world { blocks = setColor col bid (blocks world) , costs = c:cs}
+    World { canvas = cnvs, blocks = tbl0, costs = tc } 
+        -> world { blocks = setColor col bid (blocks world), costs = tc + c}
             where
-                c = cost (size cvs) 5 tbl0 bid 
+                c = cost (size cnvs) 5 (shape (tbl0 Map.! bid))
 
 setColor :: Color -> BlockId -> Map.Map BlockId Block -> Map.Map BlockId Block
 setColor c bid tbl = case tbl Map.! bid of
@@ -124,20 +124,41 @@ setColor c bid tbl = case tbl Map.! bid of
     ComplexBlock shp bs -> foldr (setColor c) tbl bs
 
 swapmove :: BlockId -> BlockId -> Instruction
-swapmove bid1 bid2 world = case world of
-    World {} -> undefined
+swapmove bid0 bid1 world = case world of
+    World { canvas = cnvs, blocks = tbl0, costs = tc }
+        | sameShape shp0 shp1 -> world { blocks = tbl2, costs = tc + c }
+        | otherwise           -> error "swapmove: not same shapes"
+        where
+            block0 = tbl0 Map.! bid0
+            block1 = tbl0 Map.! bid1
+            shp0 = shape block0
+            shp1 = shape block1
+            tbl1 = Map.update (const $ Just $ block0 { shape = shp1 }) bid0 tbl0
+            tbl2 = Map.update (const $ Just $ block1 { shape = shp0 }) bid1 tbl1
+            c = cost (size cnvs) 3 shp0
 
 mergemove :: BlockId -> BlockId -> Instruction
-mergemove bid1 bid2 world = case world of
-    World {} -> undefined
+mergemove bid0 bid1 world = case world of
+    World { canvas = cnvs, counter = cnt, blocks = tbl0, costs = tc }
+        | compatibleShape shp0 shp1 -> world { counter = succ cnt, blocks = tbl1, costs = tc + c}
+        | otherwise                 -> error "mergemove: not compatible shapes"
+        where
+            block0 = tbl0 Map.! bid0
+            block1 = tbl0 Map.! bid1
+            shp0@(Rectangle (x00,y00) (x01,y01)) = shape block0
+            shp1@(Rectangle (x10,y10) (x11,y11)) = shape block1
+            newshp = if
+                | x00 == x10 -> Rectangle (x00, min y00 y10) (x01, max y01 y11)
+                | y00 == y10 -> Rectangle (min x00 x10, y00) (max x01 x11, y01)
+                | otherwise  -> error "mergemove: not compatible shapes"
+            tbl1 = Map.insert [cnt] (ComplexBlock newshp [bid0, bid1]) tbl0
+            c0 = cost (size cnvs) 1 shp0
+            c1 = cost (size cnvs) 1 shp1
+            c  = max c0 c1
 
-
-
-cost :: Int -> Int -> BlockTable -> BlockId -> Int
-cost csz base tbl bid 
-    = roundUpOn5 $ fromIntegral base * fromIntegral csz / fromIntegral (size (shape block))
-    where
-        block = tbl Map.! bid
+cost :: Int -> Int -> Shape -> Int
+cost csz base shp
+    = roundUpOn5 $ fromIntegral base * fromIntegral csz / fromIntegral (size shp)
 
 size :: Shape -> Int
 size = \ case
