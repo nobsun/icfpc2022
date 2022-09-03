@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 162d99b92daf00ca8e2e09cb0190c0422c47b4715b03035b8eb51fa892891fc2
+-- hash: 20634511b3d6f11fdb15760ceb8ec31f846566129dfb063e2c80720e3f5ed400
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      EvalJuicyPixels
       ISL
       Lib
       Oga
@@ -37,7 +38,8 @@ library
   hs-source-dirs:
       src
   build-depends:
-      array
+      JuicyPixels
+    , array
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -45,6 +47,7 @@ library
     , hspec
     , main-tester
     , mtl
+    , primitive
     , time
     , unicode-show
     , utf8-string
@@ -69,6 +72,7 @@ executable average-color
     , icfpc2022
     , main-tester
     , mtl
+    , primitive
     , time
     , unicode-show
     , utf8-string
@@ -83,7 +87,8 @@ executable icfpc2022
       app
   ghc-options: -rtsopts
   build-depends:
-      array
+      JuicyPixels
+    , array
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -92,6 +97,7 @@ executable icfpc2022
     , icfpc2022
     , main-tester
     , mtl
+    , primitive
     , time
     , unicode-show
     , utf8-string
@@ -116,6 +122,7 @@ executable mosaic-color
     , icfpc2022
     , main-tester
     , mtl
+    , primitive
     , time
     , unicode-show
     , utf8-string
@@ -131,7 +138,8 @@ test-suite icfpc2022-doctest
   hs-source-dirs:
       test
   build-depends:
-      array
+      JuicyPixels
+    , array
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -141,6 +149,7 @@ test-suite icfpc2022-doctest
     , icfpc2022
     , main-tester
     , mtl
+    , primitive
     , time
     , unicode-show
     , utf8-string
@@ -156,7 +165,8 @@ test-suite icfpc2022-test
   hs-source-dirs:
       test
   build-depends:
-      array
+      JuicyPixels
+    , array
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -165,6 +175,7 @@ test-suite icfpc2022-test
     , icfpc2022
     , main-tester
     , mtl
+    , primitive
     , time
     , unicode-show
     , utf8-string

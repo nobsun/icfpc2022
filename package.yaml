@@ -32,6 +32,8 @@ dependencies:
 - array
 - vector
 - mtl
+- JuicyPixels
+- primitive
 
 library:
   source-dirs: src
@@ -55,7 +57,6 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
-    - JuicyPixels
   mosaic-color:
     main:                Main.hs
     source-dirs:         app/mosaic-color
@@ -65,7 +66,6 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
-    - JuicyPixels
 
 tests:
   icfpc2022-test:
