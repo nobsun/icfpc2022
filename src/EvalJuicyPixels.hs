@@ -136,7 +136,7 @@ getCanvasSize = do
 
 
 addCost :: Monad m => Double -> M m ()
-addCost c = tell $ Sum (round c)
+addCost c = tell $ Sum (round' c)
 
 
 sampleMoves =
@@ -235,7 +235,7 @@ test = writePng "test.png" $ evalISL (400, 400) sampleMoves
 
 similarity :: Image PixelRGBA8 -> Image PixelRGBA8 -> Integer
 similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight img1 == imageHeight img2) $
-  round $ (alpha *) $ sum $
+  round' $ (alpha *) $ sum $
     [ pixelDiff p1 p2
     | y <- [0 .. imageHeight img1 - 1]
     , x <- [0 .. imageWidth img1 - 1]
@@ -254,6 +254,12 @@ similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight
         ]
 
 
+-- Haskell の round は偶数丸めだが、JavascriptのMath.roundは四捨五入なので、それに合わせる
+-- https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Math/round
+round' :: (RealFrac a, Integral b) => a -> b
+round' x = floor (x + 0.5)
+
+
 test_similarity = do
   Right (ImageRGBA8 img1) <- readImage "probs/1.png"
   let (img2, c) = evalISLWithCost (400, 400) sampleMoves
@@ -261,4 +267,4 @@ test_similarity = do
   print $ similarity img1 img1 == 0
   print $ similarity img2 img2 == 0
   print (similarity img1 img2)
-  print $ similarity img1 img2 + c  -- should be 48403, but ...
+  print $ similarity img1 img2 + c
