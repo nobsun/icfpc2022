@@ -1,0 +1,23 @@
+# -*- Sh -*-
+
+set_envs() {
+    if [ x"$API_KEY" = x ]; then
+        . api/key
+    fi
+}
+
+api_url() {
+    echo https://robovinci.xyz/$1
+}
+
+api_prefix=https://robovinci.xyz/
+
+api_request() {
+    curl -H "Authorization: Bearer $API_KEY" "$@"
+}
+
+api_request_nl() {
+    api_request "$@"
+    ## for no trailing newline JSON output
+    echo ''
+}

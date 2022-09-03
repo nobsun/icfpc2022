@@ -5,5 +5,8 @@ set -e
 . api/lib
 set_envs
 
-set -x
-api_request -X GET $(api_url api/users)
+if [ x"$1" = x-v ]; then
+    set -x
+fi
+
+api_request_nl -X GET ${api_prefix}api/users
