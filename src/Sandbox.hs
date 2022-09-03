@@ -64,10 +64,9 @@ data Block = Leaf Simple           -- ^ SimpleBlock
 -- >>> cataBlock Leaf Node b == b
 -- True
 cataBlock :: (Simple -> a) -> (Complex a -> a) -> Block -> a
-cataBlock f g = u
-  where
-    u (Leaf a)                = f a
-    u (Node (Complex p s bs)) = g (Complex p s (map u bs))
+cataBlock f g = u where
+  u (Leaf a)                = f a
+  u (Node (Complex p s bs)) = g (Complex p s (map u bs))
 
 -- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
 --
@@ -96,11 +95,9 @@ cataBlock f g = u
 -- >>> anaBlock psi b == b
 -- True
 anaBlock :: (a -> Either Simple (Complex a)) -> a -> Block
-anaBlock psi = v
-  where
-    v x = case psi x of
-      Left  b                -> Leaf b
-      Right (Complex p s xs) -> Node (Complex p s (map v xs))
+anaBlock psi = v where
+  v = either Leaf (Node . f) . psi
+  f (Complex p s xs) = Complex p s (map v xs)
 
 -- | moves
 
