@@ -35,6 +35,8 @@ data Shape
     deriving (Eq, Show)
 
 type Id = Int
+
+-- Note that numbers are reversed
 type BlockId = [Int]
 
 instance {-# Overlapping #-} Read BlockId where
