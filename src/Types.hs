@@ -1,23 +1,37 @@
-
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 module Types where
 
+import qualified Data.Map as Map
+import Data.List
+import qualified Data.Set as Set
 import qualified Graphics.Gloss as Gloss
+import qualified Graphics.Gloss.Data.Bitmap as Gloss
 import Numeric
 import Text.ParserCombinators.ReadP
 
+type BitmapData = Gloss.BitmapData
+type Canvas = BitmapData
 
-type Canvas = [Block]
+type Color = RGBA
+type RGBA = (Int, Int, Int, Int)
 
-type Color = (Int, Int, Int, Int)
+-- type Block        = Either SimpleBlock ComplexBlock
 
-type Block        = Either SimpleBlock ComplexBlock
-data SimpleBlock  = SimpleBlock Shape Color
-data ComplexBlock = ComplexBlock Shape ChildBlocks
-type ChildBlocks  = [SimpleBlock]
+data Block 
+    = SimpleBlock { shape :: Shape, blockColor :: Color }
+    | ComplexBlock { shape :: Shape, children :: ChildBlocks }
+    deriving (Eq, Show)
 
-data Shape -- Not yet defined
+type ChildBlocks  = Set.Set BlockId
+
+data Shape
+    = Rectangle
+        { leftBottom :: Point
+        , rightUpper :: Point
+        }
+    deriving (Eq, Show)
 
 type Id = Int
 type BlockId = [Int]
@@ -26,7 +40,10 @@ instance {-# Overlapping #-} Read BlockId where
     readsPrec _ = readP_to_S rBlockId
 
 rBlockId :: ReadP BlockId
-rBlockId = undefined
+rBlockId = reverse <$> sepBy1 rInt (char '.')
+
+rInt :: ReadP Int
+rInt = readS_to_P reads
 
 data Orientation
     = X
@@ -37,11 +54,12 @@ rOrientation :: ReadP Orientation
 rOrientation = readS_to_P reads
 
 type Offset = Int
+type Point = (Int, Int)
 
 data Move 
     = LCUT  BlockId Orientation Offset
-    | PCUT  BlockId Offset Offset
-    | COLOR BlockId Types.Color
+    | PCUT  BlockId Point
+    | COLOR BlockId Color
     | SWAP  BlockId BlockId 
     | MERGE BlockId BlockId 
     deriving (Eq, Show)
@@ -50,31 +68,36 @@ instance Read Move where
     readsPrec _ = readP_to_S rMove
 
 rMove :: ReadP Move
-rMove = rLCut +++ rPCut +++ rColor +++ rSwap +++ rMerge
+rMove = rLCutMove +++ rPCutMove +++ rColorMove +++ rSwapMove +++ rMergeMove
 
-rLCut :: ReadP Move
-rLCut = LCUT <$> rBlockId <*> rOrientation <*> rOffset
+rLCutMove :: ReadP Move
+rLCutMove = LCUT <$> rBlockId <*> rOrientation <*> rOffset
+
+rBracket :: ReadP a -> ReadP a
+rBracket = between (char '[') (char ']')
 
 rOffset :: ReadP Offset
-rOffset = readS_to_P readDec
+rOffset = between (char '[') (char ']') (readS_to_P reads)
 
-rPCut :: ReadP Move
-rPCut = PCUT <$> rBlockId <*> rOffset <*> rOffset
+rPCutMove :: ReadP Move
+rPCutMove = PCUT <$> rBlockId <*> rPoint
 
-rColor :: ReadP Move
-rColor = COLOR <$> rBlockId <*> rColor'
+rPoint :: ReadP Point
+rPoint = rBracket ((,) <$> rInt <* char ',' <*> rInt)
 
-rColor' :: ReadP Color
-rColor' = readS_to_P reads
+rColorMove :: ReadP Move
+rColorMove = COLOR <$> rBlockId <*> rColor
 
-gColor :: Color -> Gloss.Color
-gColor (r,g,b,a) = Gloss.makeColorI r g b a
+rColor :: ReadP Color
+rColor = readS_to_P reads
 
-rSwap :: ReadP Move
-rSwap = SWAP <$> rBlockId <*> rBlockId
+rSwapMove :: ReadP Move
+rSwapMove = SWAP <$> rBlockId <*> rBlockId
 
-rMerge :: ReadP Move
-rMerge = MERGE <$> rBlockId <*> rBlockId
+rMergeMove :: ReadP Move
+rMergeMove = MERGE <$> rBlockId <*> rBlockId
+
+-- ProgLine
 
 data ProgLine
     = Move Move
@@ -82,9 +105,76 @@ data ProgLine
     | Comment String
     deriving (Eq, Show)
 
+displayProgLine :: ProgLine -> String
+displayProgLine = \ case
+    Newline     -> "\n"
+    Comment msg -> "# " ++ msg
+    Move mv     -> case mv of
+        LCUT bid ori off   -> intercalate " " [ "cut"
+                                              , dispBlockId bid
+                                              , dispOrientation ori
+                                              , dispOffset off]
+        PCUT bid pnt       -> intercalate " " [ "cut"
+                                              , dispBlockId bid
+                                              , dispPoint pnt]
+        COLOR bid color    -> intercalate " " [ "color"
+                                              , dispBlockId bid
+                                              , dispColor color ]
+        SWAP bid1 bid2     -> intercalate " " [ "swap"
+                                              , dispBlockId bid1
+                                              , dispBlockId bid2
+                                              ]
+        MERGE bid1 bid2    -> intercalate " " [ "merge"
+                                              , dispBlockId bid1
+                                              , dispBlockId bid2
+                                              ]
+
+dispBlockId :: BlockId -> String
+dispBlockId = dispBetween "[" "]" . intercalate "." . map show . reverse
+
+dispBetween :: String -> String -> String -> String
+dispBetween o c s = o ++ s ++ c
+
+dispOrientation :: Orientation -> String
+dispOrientation = dispBetween "[" "]" . show 
+
+dispOffset :: Offset -> String
+dispOffset = dispBetween "[" "]" . show
+
+dispPoint :: Point -> String
+dispPoint (x,y) = dispBetween "[" "]"
+                  (intercalate "," (map show [x,y]))
+
+dispColor :: Color -> String
+dispColor (r,g,b,a) = dispBetween "[" "]"
+                      (intercalate "," (map show [r,g,b,a]))
+
+-- World
+
 data World 
     = World
-    { blockSupply :: BlockId
-    , canvas      :: Canvas
-    , picture     :: Gloss.Picture
+    { prog        :: [Instruction]
+    , counter     :: Int
+    , blocks      :: Map.Map BlockId Block
+    , pict        :: Gloss.Picture
     }
+
+initialWorld :: [Instruction] -> World
+initialWorld is
+    = World
+    { prog = is
+    , counter = 0
+    , blocks = Map.singleton [0] 
+                 (SimpleBlock (Rectangle (0,0) (400, 400)) white)
+    , pict   = undefined
+    }
+
+white :: Color
+white = (255,255,255,255)
+
+incCount :: World -> (Int, World)
+incCount world = (cnt, world { counter = succ cnt })
+    where
+        cnt = counter world
+
+type Instruction = World -> World
