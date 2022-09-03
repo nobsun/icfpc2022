@@ -26,14 +26,32 @@ type Rect = ((Int,Int), (Int,Int))
 type M m = ExceptT String (RWST (MutableImage (PrimState m) PixelRGBA8) (Sum Integer) (Int, Map.Map BlockId Rect) m)
 
 
-evalISL :: (Int, Int) -> [Move] -> Either String (Image PixelRGBA8)
-evalISL size moves = fmap fst $ evalISLWithCost size moves
+evalISL :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8)
+evalISL config moves = fmap fst $ evalISLWithCost config moves
 
 
-evalISLWithCost :: (Int, Int) -> [Move] -> Either String (Image PixelRGBA8, Integer)
-evalISLWithCost (w,h) moves = runST $ do
-  img <- createMutableImage w h (PixelRGBA8 255 255 255 255)
-  (ret, _s, cost) <- runRWST (runExceptT (mapM_ evalMove moves)) img (0, Map.singleton [0] ((0,0),(w,h)))
+evalISLWithCost :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8, Integer)
+evalISLWithCost config moves = runST $ do
+  img <- createMutableImage (icWidth config) (icHeight config) (PixelRGBA8 255 255 255 255)
+
+  forM_ (icBlocks config) $ \block -> do
+    let (x1,y1) = icbBottomLeft block
+        (x2,y2) = icbTopRight block
+        (r,g,b,a) = icbColor block
+        px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
+    forM_ [y1..y2-1] $ \y -> do
+      forM_ [x1..x2-1] $ \x -> do
+        writePixel img x (mutableImageHeight img - 1 - y) px
+
+  let cnt = length (icBlocks config) - 1
+      blocks =
+        Map.fromList
+        [ ([read (icbBlockId block)], ((x1,y1), (x2-x1, y2-y1)))
+        | block <- icBlocks config
+        , let (x1,y1) = icbBottomLeft block, let (x2,y2) = icbTopRight block
+        ]
+
+  (ret, _s, cost) <- runRWST (runExceptT (mapM_ evalMove moves)) img (cnt, blocks)
   case ret of
     Left err -> return (Left err)
     Right _ -> do
@@ -239,7 +257,7 @@ sampleMoves =
 
 
 test = do
-  case evalISL (400, 400) sampleMoves of
+  case evalISL defaultInitialConfig sampleMoves of
     Left err -> fail err
     Right img -> writePng "test.png" img
 
@@ -274,7 +292,7 @@ round' x = floor (x + 0.5)
 
 test_similarity = do
   Right (ImageRGBA8 img1) <- readImage "probs/1.png"
-  case evalISLWithCost (400, 400) sampleMoves of
+  case evalISLWithCost defaultInitialConfig sampleMoves of
     Left err -> fail err
     Right (img2, c) -> do
       print c

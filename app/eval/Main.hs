@@ -1,6 +1,7 @@
 module Main where
 
 import Codec.Picture
+import Control.Monad
 import Options.Applicative
 
 import EvalJuicyPixels
@@ -10,6 +11,7 @@ import Types
 data Options
   = Options
   { optOutput :: Maybe FilePath
+  , optInitialConfig :: Maybe FilePath
   , optTarget :: Maybe FilePath
   , optInput :: FilePath
   }
@@ -17,11 +19,19 @@ data Options
 optionsParser :: Parser Options
 optionsParser = Options
   <$> outputOption
+  <*> initialConfigOption
   <*> targetOption
   <*> fileInput
   where
     fileInput :: Parser FilePath
     fileInput = argument str (metavar "FILE")
+
+    initialConfigOption :: Parser (Maybe FilePath)
+    initialConfigOption = optional $ strOption
+      $  short 'c'
+      <> metavar "FILE"
+      <> help "initial config"
+      <> showDefaultWith id
 
     outputOption :: Parser (Maybe FilePath)
     outputOption = optional $ strOption
@@ -48,18 +58,24 @@ main :: IO ()
 main = do
   opt <- execParser parserInfo
 
-  (targetImage, size) <-
+  initialConfig <-
+    case optInitialConfig opt of
+      Nothing -> return defaultInitialConfig
+      Just fname -> loadInitialConfig fname
+
+  targetImage <-
     case optTarget opt of
       Nothing -> do
-        -- TODO: サイズは別途指定できるように
-        return (Nothing, (400, 400))
+        return Nothing
       Just fname -> do
         Right (ImageRGBA8 img) <- readImage fname
-        return (Just img, (imageWidth img, imageHeight img))
+        unless (icWidth initialConfig == imageWidth img && icHeight initialConfig == imageHeight img) $
+          fail "size mismatch"
+        return (Just img)
 
   moves <- loadISL (optInput opt)
   (img, cost) <-
-    case evalISLWithCost size moves of
+    case evalISLWithCost initialConfig moves of
       Left err -> fail err
       Right (img, cost) -> return (img, cost)
 
