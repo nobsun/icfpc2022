@@ -10,7 +10,7 @@ import Codec.Picture.Types
 import Control.Exception (assert)
 import Control.Monad
 import Control.Monad.Primitive
-import Control.Monad.RWS
+import Control.Monad.RWS.Strict
 import Control.Monad.ST
 import Data.List (isPrefixOf)
 import qualified Data.Map.Strict as Map
@@ -41,7 +41,7 @@ evalMove :: PrimMonad m => Move -> M m ()
 evalMove (COLOR bid (r,g,b,a)) = do
   ((x,y), (w,h)) <- lookupBlock bid
   img <- ask
-  -- TODO: αチャンネルを考慮して色を混ぜる必要がある?w
+  -- αチャンネルを考慮して色を混ぜる必要はないようだ
   let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
   forM_ [y..y+h-1] $ \y' -> do
     forM_ [x..x+w-1] $ \x' -> do
