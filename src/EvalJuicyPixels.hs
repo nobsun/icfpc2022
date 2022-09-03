@@ -1,5 +1,6 @@
 module EvalJuicyPixels
   ( evalISL
+  , evalISLWithCost
   , similarity
   ) where
 
