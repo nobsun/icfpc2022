@@ -37,102 +37,95 @@ evalISLWithCost (w,h) moves = runST $ do
 
 evalMove :: PrimMonad m => Move -> M m ()
 evalMove (COLOR bid (r,g,b,a)) = do
-  (_cnt, blocks) <- get
-  case Map.lookup bid blocks of
-    Nothing -> error ("no such block: " ++ dispBlockId bid)
-    Just ((x,y), (w,h)) -> do
-      img <- ask
-      -- TODO: αチャンネルを考慮して色を混ぜる必要がある?
-      let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
-      forM_ [y..y+h-1] $ \y' -> do
-        forM_ [x..x+w-1] $ \x' -> do
-          writePixel img x' (mutableImageHeight img - 1 - y') px
-      canvasSize <- getCanvasSize
-      addCost $ 5 * canvasSize / fromIntegral (w * h)
+  ((x,y), (w,h)) <- lookupBlock bid
+  img <- ask
+  -- TODO: αチャンネルを考慮して色を混ぜる必要がある?w
+  let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
+  forM_ [y..y+h-1] $ \y' -> do
+    forM_ [x..x+w-1] $ \x' -> do
+      writePixel img x' (mutableImageHeight img - 1 - y') px
+  canvasSize <- getCanvasSize
+  addCost $ 5 * canvasSize / fromIntegral (w * h)
 evalMove (LCUT bid orientation offset) = do
+  ((x,y), (w,h)) <- lookupBlock bid
   (cnt, blocks) <- get
-  case Map.lookup bid blocks of
-    Nothing -> error ("no such block: " ++ dispBlockId bid)
-    Just ((x,y), (w,h)) -> do
-      case orientation of
-        X -> do
-          unless (x <= offset && offset <= x + w) undefined
-          put $
-            ( cnt
-            , Map.insert (bid ++ [0]) ((x,y),(offset-x,h)) $
-              Map.insert (bid ++ [1]) ((offset,y),(x+w-offset,h)) $
-              Map.delete bid blocks
-            )
-        Y -> do
-          unless (y <= offset && offset <= y + h) undefined
-          put $
-            ( cnt
-            , Map.insert (bid ++ [0]) ((x,y),(w,offset-y)) $
-              Map.insert (bid ++ [1]) ((x,offset),(w,y+h-offset)) $
-              Map.delete bid blocks
-            )
-      canvasSize <- getCanvasSize
-      addCost $ 7 * canvasSize / fromIntegral (w * h)
-evalMove (PCUT bid (x1,y1)) = do
-  (cnt, blocks) <- get
-  case Map.lookup bid blocks of
-    Nothing -> error ("no such block: " ++ dispBlockId bid)
-    Just ((x,y),(w,h)) -> do
-      unless (x <= x1 && x1 <= x + w) undefined
-      unless (y <= y1 && y1 <= y + h) undefined
+  case orientation of
+    X -> do
+      unless (x <= offset && offset <= x + w) undefined
       put $
         ( cnt
-        , Map.union (Map.delete bid blocks) $
-          Map.fromList
-            [ (bid ++ [0], ((x,  y),  (x1-x,   y1-y)))
-            , (bid ++ [1], ((x1, y),  (x+w-x1, y1-y)))
-            , (bid ++ [2], ((x1, y1), (x+w-x1, y+h-y1)))
-            , (bid ++ [3], ((x,  y1), (x1-x,   y+h-y1)))
-            ]
+        , Map.insert (bid ++ [0]) ((x,y),(offset-x,h)) $
+          Map.insert (bid ++ [1]) ((offset,y),(x+w-offset,h)) $
+          Map.delete bid blocks
         )
-      canvasSize <- getCanvasSize
-      addCost $ 10 * canvasSize / fromIntegral (w * h)
+    Y -> do
+      unless (y <= offset && offset <= y + h) undefined
+      put $
+        ( cnt
+        , Map.insert (bid ++ [0]) ((x,y),(w,offset-y)) $
+          Map.insert (bid ++ [1]) ((x,offset),(w,y+h-offset)) $
+          Map.delete bid blocks
+        )
+  canvasSize <- getCanvasSize
+  addCost $ 7 * canvasSize / fromIntegral (w * h)
+evalMove (PCUT bid (x1,y1)) = do
+  (cnt, blocks) <- get
+  ((x,y), (w,h)) <- lookupBlock bid
+  unless (x <= x1 && x1 <= x + w) undefined
+  unless (y <= y1 && y1 <= y + h) undefined
+  put $
+    ( cnt
+    , Map.union (Map.delete bid blocks) $
+      Map.fromList
+        [ (bid ++ [0], ((x,  y),  (x1-x,   y1-y)))
+        , (bid ++ [1], ((x1, y),  (x+w-x1, y1-y)))
+        , (bid ++ [2], ((x1, y1), (x+w-x1, y+h-y1)))
+        , (bid ++ [3], ((x,  y1), (x1-x,   y+h-y1)))
+        ]
+    )
+  canvasSize <- getCanvasSize
+  addCost $ 10 * canvasSize / fromIntegral (w * h)
 evalMove (SWAP bid1 bid2) = do
   (cnt, blocks) <- get
-  case Map.lookup bid1 blocks of
-    Nothing -> error ("no such block: " ++ dispBlockId bid1)
-    Just ((x1,y1),size1@(w1,h1)) -> do
-      case Map.lookup bid2 blocks of
-        Nothing -> error ("no such block: " ++ dispBlockId bid2)
-        Just ((x2,y2),size2@(w2,h2)) -> do
-          unless (size1 == size2) undefined
-          img <- ask
-          forM_ [0..h1-1] $ \i -> do
-            forM_ [0..w1-1] $ \j -> do
-              px1 <- readPixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i))
-              px2 <- readPixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i))
-              writePixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i)) px2
-              writePixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i)) px1
-          put $
-            ( cnt
-            , Map.insert bid2 ((x1,y1),size1) $ Map.insert bid1 ((x2,y2),size2) $ blocks
-            )
-          canvasSize <- getCanvasSize
-          addCost $ 3 * canvasSize / fromIntegral (w1 * h1)
+  ((x1,y1),size1@(w1,h1)) <- lookupBlock bid1
+  ((x2,y2),size2@(w2,h2)) <- lookupBlock bid2
+  unless (size1 == size2) undefined
+  img <- ask
+  forM_ [0..h1-1] $ \i -> do
+    forM_ [0..w1-1] $ \j -> do
+      px1 <- readPixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i))
+      px2 <- readPixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i))
+      writePixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i)) px2
+      writePixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i)) px1
+  put $
+    ( cnt
+    , Map.insert bid2 ((x1,y1),size1) $ Map.insert bid1 ((x2,y2),size2) $ blocks
+    )
+  canvasSize <- getCanvasSize
+  addCost $ 3 * canvasSize / fromIntegral (w1 * h1)
 evalMove (MERGE bid1 bid2) = do
   (cnt, blocks) <- get
-  case Map.lookup bid1 blocks of
-    Nothing -> error ("no such block: " ++ dispBlockId bid1)
-    Just ((x1,y1),size1@(w1,h1)) -> do
-      case Map.lookup bid2 blocks of
-        Nothing -> error ("no such block: " ++ dispBlockId bid2)
-        Just ((x2,y2),size2@(w2,h2)) -> do
-          let blocks' = Map.delete bid1 $ Map.delete bid2 blocks
-              cnt' = cnt + 1
-              bid3 = [cnt']
-          if x1 == x2 && w1 == w2 && (y1 + h1 == y2 || y2 + h2 == y1) then do
-            put (cnt', Map.insert bid3 ((x1, min y1 y2), (w1, h1+h2)) blocks')
-          else if y1 == y2 && h1 == h2 && (x1 + w1 == x2 || x2 + w2 == x1) then do
-            put (cnt', Map.insert bid3 ((min x1 x2, y1), (w1+w2, h1)) blocks')
-          else do
-            undefined
-          canvasSize <- getCanvasSize
-          addCost $ 1 * canvasSize / fromIntegral (max (w1 * h1) (w2 * h2))
+  ((x1,y1),size1@(w1,h1)) <- lookupBlock bid1
+  ((x2,y2),size2@(w2,h2)) <- lookupBlock bid2
+  let blocks' = Map.delete bid1 $ Map.delete bid2 blocks
+      cnt' = cnt + 1
+      bid3 = [cnt']
+  if x1 == x2 && w1 == w2 && (y1 + h1 == y2 || y2 + h2 == y1) then do
+    put (cnt', Map.insert bid3 ((x1, min y1 y2), (w1, h1+h2)) blocks')
+  else if y1 == y2 && h1 == h2 && (x1 + w1 == x2 || x2 + w2 == x1) then do
+    put (cnt', Map.insert bid3 ((min x1 x2, y1), (w1+w2, h1)) blocks')
+  else do
+    undefined
+  canvasSize <- getCanvasSize
+  addCost $ 1 * canvasSize / fromIntegral (max (w1 * h1) (w2 * h2))
+
+
+lookupBlock :: Monad m => BlockId -> M m Rect
+lookupBlock bid = do
+  (_, blocks) <- get
+  case Map.lookup bid blocks of
+    Nothing -> error ("no such block: " ++ dispBlockId bid)
+    Just rect -> return rect
 
 
 getCanvasSize :: Monad m => M m Double
