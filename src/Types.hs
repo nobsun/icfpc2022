@@ -6,7 +6,7 @@ module Types where
 import Data.Char
 import qualified Data.Map as Map
 import Data.List
-import qualified Data.Set as Set
+-- import qualified Data.Set as Set
 import qualified Graphics.Gloss as Gloss
 import qualified Graphics.Gloss.Data.Bitmap as Gloss
 import Numeric
@@ -25,7 +25,7 @@ data Block
     | ComplexBlock { shape :: Shape, children :: ChildBlocks }
     deriving (Eq, Show)
 
-type ChildBlocks  = Set.Set BlockId
+type ChildBlocks  = [BlockId]
 
 data Shape
     = Rectangle
@@ -150,6 +150,14 @@ dispColor :: Color -> String
 dispColor (r,g,b,a) = dispBetween "[" "]"
                       (intercalate "," (map show [r,g,b,a]))
 
+dispBlockEntry :: Map.Map BlockId Block -> (BlockId, Block) -> String
+dispBlockEntry tbl (bid, b) = dispBlockId bid ++ ": " ++ dispBlock tbl b
+
+dispBlock :: Map.Map BlockId Block -> Block -> String
+dispBlock tbl = \ case
+    SimpleBlock  shp col -> show shp ++ " " ++ dispColor col
+    ComplexBlock shp bs  -> show shp ++ " [" ++ intercalate ", " (map (dispBlock tbl . (tbl Map.!)) bs) ++ "]"
+
 -- World
 
 data World 
@@ -161,8 +169,11 @@ data World
     }
 
 instance Show World where
-    showsPrec _ = \ case
-        wolrd@(World { blocks = btbl }) -> shows btbl
+    show w = case w of
+        World { blocks = tbl }
+            -> unlines (map (dispBlockEntry tbl) (Map.assocs tbl))
+
+
 
 initialWorld :: [Instruction] -> World
 initialWorld is
@@ -176,6 +187,10 @@ initialWorld is
 
 white :: Color
 white = (255,255,255,255)
+red, green, blue :: Color
+red  = (255,0,0,255)
+green = (0,255,0,255)
+blue  = (0,0,255,255)
 
 incCount :: World -> (Int, World)
 incCount world = (cnt, world { counter = succ cnt })
