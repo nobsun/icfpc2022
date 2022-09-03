@@ -1,5 +1,6 @@
 module EvalJuicyPixels
   ( evalISL
+  , evalISLWithCost
   , similarity
   ) where
 
@@ -54,16 +55,16 @@ evalMove (LCUT bid orientation offset) = do
       unless (x <= offset && offset <= x + w) undefined
       put $
         ( cnt
-        , Map.insert (bid ++ [0]) ((x,y),(offset-x,h)) $
-          Map.insert (bid ++ [1]) ((offset,y),(x+w-offset,h)) $
+        , Map.insert (0 : bid) ((x,y),(offset-x,h)) $
+          Map.insert (1 : bid) ((offset,y),(x+w-offset,h)) $
           Map.delete bid blocks
         )
     Y -> do
       unless (y <= offset && offset <= y + h) undefined
       put $
         ( cnt
-        , Map.insert (bid ++ [0]) ((x,y),(w,offset-y)) $
-          Map.insert (bid ++ [1]) ((x,offset),(w,y+h-offset)) $
+        , Map.insert (0 : bid) ((x,y),(w,offset-y)) $
+          Map.insert (1 : bid) ((x,offset),(w,y+h-offset)) $
           Map.delete bid blocks
         )
   canvasSize <- getCanvasSize
@@ -77,10 +78,10 @@ evalMove (PCUT bid (x1,y1)) = do
     ( cnt
     , Map.union (Map.delete bid blocks) $
       Map.fromList
-        [ (bid ++ [0], ((x,  y),  (x1-x,   y1-y)))
-        , (bid ++ [1], ((x1, y),  (x+w-x1, y1-y)))
-        , (bid ++ [2], ((x1, y1), (x+w-x1, y+h-y1)))
-        , (bid ++ [3], ((x,  y1), (x1-x,   y+h-y1)))
+        [ (0 : bid, ((x,  y),  (x1-x,   y1-y)))
+        , (1 : bid, ((x1, y),  (x+w-x1, y1-y)))
+        , (2 : bid, ((x1, y1), (x+w-x1, y+h-y1)))
+        , (3 : bid, ((x,  y1), (x1-x,   y+h-y1)))
         ]
     )
   canvasSize <- getCanvasSize
