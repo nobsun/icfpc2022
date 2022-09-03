@@ -129,25 +129,28 @@ displayProgLine :: ProgLine -> String
 displayProgLine = \ case
     Newline     -> "\n"
     Comment msg -> "# " ++ msg
-    Move mv     -> case mv of
-        LCUT bid ori off   -> intercalate " " [ "cut"
-                                              , dispBlockId bid
-                                              , dispOrientation ori
-                                              , dispOffset off]
-        PCUT bid pnt       -> intercalate " " [ "cut"
-                                              , dispBlockId bid
-                                              , dispPoint pnt]
-        COLOR bid color    -> intercalate " " [ "color"
-                                              , dispBlockId bid
-                                              , dispColor color ]
-        SWAP bid0 bid1     -> intercalate " " [ "swap"
-                                              , dispBlockId bid0
-                                              , dispBlockId bid1
-                                              ]
-        MERGE bid0 bid1    -> intercalate " " [ "merge"
-                                              , dispBlockId bid0
-                                              , dispBlockId bid1
-                                              ]
+    Move mv     -> dispMove mv
+
+dispMove :: Move -> String
+dispMove = \case
+    LCUT bid ori off   -> intercalate " " [ "cut"
+                                          , dispBlockId bid
+                                          , dispOrientation ori
+                                          , dispOffset off]
+    PCUT bid pnt       -> intercalate " " [ "cut"
+                                          , dispBlockId bid
+                                          , dispPoint pnt]
+    COLOR bid color    -> intercalate " " [ "color"
+                                          , dispBlockId bid
+                                          , dispColor color ]
+    SWAP bid0 bid1     -> intercalate " " [ "swap"
+                                          , dispBlockId bid0
+                                          , dispBlockId bid1
+                                          ]
+    MERGE bid0 bid1    -> intercalate " " [ "merge"
+                                          , dispBlockId bid0
+                                          , dispBlockId bid1
+                                          ]
 
 dispBlockId :: BlockId -> String
 dispBlockId = dispBetween "[" "]" . intercalate "." . map show . reverse
