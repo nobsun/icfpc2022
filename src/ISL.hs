@@ -39,11 +39,11 @@ interp pl world = case pl of
         MERGE bid1 bid2 -> mergemove bid1 bid2 world
 
 {- | lcut : Line Cut Move instruction 
->>> lcut [0] X 100 (initialWorld [])
+>>> lcut [0] X 100 initialWorld
 [0.0]: Rectangle {leftBottom = (0,0), rightUpper = (100,400)} [255,255,255,255]
 [0.1]: Rectangle {leftBottom = (100,0), rightUpper = (400,400)} [255,255,255,255]
 <BLANKLINE>
->>> lcut [0] Y 100 (initialWorld [])
+>>> lcut [0] Y 100 initialWorld
 [0.0]: Rectangle {leftBottom = (0,0), rightUpper = (400,100)} [255,255,255,255]
 [0.1]: Rectangle {leftBottom = (0,100), rightUpper = (400,400)} [255,255,255,255]
 <BLANKLINE>
@@ -75,7 +75,7 @@ lcut bid o off world = case world of
 {- | pcut : Point Cut Move instruction
 >>> bs  = [([1], SimpleBlock (Rectangle (0,0) (40, 50)) green), ([2], SimpleBlock (Rectangle (0,50) (40, 400)) red), ([3], SimpleBlock (Rectangle (40,0) (400, 400)) white)]
 >>> tbl = foldr (uncurry Map.insert) Map.empty bs
->>> world0 = initialWorld undefined
+>>> world0 = initialWorld
 >>> world1 = world0 { blocks = tbl }
 >>> world1
 [1]: Rectangle {leftBottom = (0,0), rightUpper = (40,50)} [0,255,0,255]
