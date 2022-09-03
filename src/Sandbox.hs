@@ -4,26 +4,42 @@ import Data.Word
 
 -- | static model
 
-type BlockID = [Int]
+data BlockID = BlockID [Int] deriving (Show, Eq)
+-- 座標
+type X = Int
+type Y = Int
+-- 位置(絶対座標)
+data Pos = Pos { posX :: X
+               , posY :: Y
+               } deriving (Show, Eq)
 
--- | 簡易版
-data Color = White | Black | Red deriving (Show, Eq)
-{-
 data Color
-  = RGBA { r :: Word8
-         , g :: Word8
-         , b :: Word8
-         , a :: Word8
-         } deriving (Show, Eq)
--}
+  = Color { r :: Int
+          , g :: Int
+          , b :: Int
+          , a :: Int
+          } deriving (Show, Eq)
 
 -- | NOTE: Shape は不明
 type Width  = Int
 type Height = Int
-type Shape = (Width, Height)
+data Shape = Rect { w :: Width
+                  , h :: Height
+                  } deriving (Show, Eq)
 
-data Block = Leaf (BlockID, Shape, Color)       -- ^ SimpleBlock
-           | Node (Shape, [Block])              -- ^ ComplexBlock
+data Simple = Simple { sPos     :: Pos
+                     , sBlockId :: BlockID
+                     , sShape   :: Shape
+                     , sColor   :: Color
+                     } deriving (Show, Eq)
+
+data Complex a = Complex { cPos    :: Pos
+                         , cShape  :: Shape
+                         , cChilds :: [a]
+                         } deriving (Show, Eq)
+
+data Block = Leaf Simple           -- ^ SimpleBlock
+           | Node (Complex Block)  -- ^ ComplexBlock
            deriving (Show, Eq)
 
 -- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
@@ -38,20 +54,20 @@ data Block = Leaf (BlockID, Shape, Color)       -- ^ SimpleBlock
 --          X  <---------------- A + [X]
 --                  [f, g]
 --        
--- >>> let b = Leaf ([0], (400, 400), White)
+-- >>> let b = Leaf (Simple (Pos 0 0) (BlockID [0]) (Rect 400 400) (Color 0 0 0 0))
 -- >>> cataBlock Leaf Node b == b
 -- True
 --
--- >>> let l = Leaf ([0, 0], (200, 400), White)
--- >>> let r = Leaf ([0, 1], (200, 400), White)
--- >>> let b = Node ((400, 400), [l, r])
+-- >>> let l = Leaf (Simple (Pos   0 0) (BlockID [0, 0]) (Rect 200 400) (Color 0 0 0 0))
+-- >>> let r = Leaf (Simple (Pos 200 0) (BlockID [0, 1]) (Rect 200 400) (Color 0 0 0 0))
+-- >>> let b = Node (Complex (Pos 0 0) (Rect 400 400) [l, r])
 -- >>> cataBlock Leaf Node b == b
 -- True
-cataBlock :: ((BlockID, Shape, Color) -> a) -> ((Shape, [a]) -> a) -> Block -> a
+cataBlock :: (Simple -> a) -> (Complex a -> a) -> Block -> a
 cataBlock f g = u
   where
-    u (Leaf a)       = f a
-    u (Node (s, bs)) = g (s, map u bs)
+    u (Leaf a)                = f a
+    u (Node (Complex p s bs)) = g (Complex p s (map u bs))
 
 -- | NOTE: Node ケースで rhs の式における s の置き場所は Shape の意味によっては変える可能性あり
 --
@@ -70,21 +86,21 @@ cataBlock f g = u
 -- >>> psi (Node b) = Right b
 -- >>> :}
 --
--- >>> let b = Leaf ([0], (400, 400), White)
+-- >>> let b = Leaf (Simple (Pos 0 0) (BlockID [0]) (Rect 400 400) (Color 0 0 0 0))
 -- >>> anaBlock psi b == b
 -- True
 --
--- >>> let l = Leaf ([0, 0], (200, 400), White)
--- >>> let r = Leaf ([0, 1], (200, 400), White)
--- >>> let b = Node ((400, 400), [l, r])
+-- >>> let l = Leaf (Simple (Pos   0 0) (BlockID [0, 0]) (Rect 200 400) (Color 0 0 0 0))
+-- >>> let r = Leaf (Simple (Pos 200 0) (BlockID [0, 1]) (Rect 200 400) (Color 0 0 0 0))
+-- >>> let b = Node (Complex (Pos 0 0) (Rect 400 400) [l, r])
 -- >>> anaBlock psi b == b
 -- True
-anaBlock :: (a -> Either (BlockID, Shape, Color) (Shape, [a])) -> a -> Block
+anaBlock :: (a -> Either Simple (Complex a)) -> a -> Block
 anaBlock psi = v
   where
     v x = case psi x of
-      Left  b       -> Leaf b
-      Right (s, xs) -> Node (s, map v xs)
+      Left  b                -> Leaf b
+      Right (Complex p s xs) -> Node (Complex p s (map v xs))
 
 -- | moves
 
@@ -97,9 +113,6 @@ type Size = Int
 -- Line
 type Line = (Orientation, Size)
 
--- 座標
-type X = Int
-type Y = Int
 -- Point
 type Point = (Int, Int) -- X, Y
 
