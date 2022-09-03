@@ -2,7 +2,11 @@
 
 module Oga where
 
+import Codec.Picture
+import Codec.Picture.Types
+import Control.Monad.Primitive (RealWorld)
 import Control.Monad.State.Lazy
+import Data.Ix (range)
 import Data.List (sortBy,intercalate)
 import Data.Ord (comparing)
 import qualified Data.Map.Lazy as Map
@@ -12,20 +16,20 @@ import qualified Data.Map.Lazy as Map
 
 test1 :: IO ()
 test1 = do
-  print $ execState (programS isl) initialBlock
+  print . bBlocks =<< execStateT (programS isl) initialBlock
   where
     isl = [Move (PCutMove (BlockId [0]) (Point 50 50))]
 
 test2 :: IO ()
 test2 = do
-  print $ execState (programS isl) initialBlock
+  print . bBlocks =<< execStateT (programS isl) initialBlock
   where
     isl = [Move (PCutMove (BlockId [0]) (Point 50 50))
           ,Move (ColorMove (BlockId [0,0]) (Color 10 0 0 0))          ]
 
 test3 :: IO ()
 test3 = do
-  print $ execState (programS isl) initialBlock
+  print .bBlocks =<< execStateT (programS isl) initialBlock
   where
     isl = [Move (PCutMove (BlockId [0]) (Point 50 50))
           ,Move (MergeMove (BlockId [1,0]) (BlockId [2,0]))
@@ -34,28 +38,37 @@ test3 = do
 
 ----------------------------------------
 
-
+{-
 executeISL :: Program -> [Paint]
 executeISL prog =
   sortBy (comparing pOrder) $ Map.elems paints
   where
     B{bPaints=paints} = execState (programS prog) initialBlock
+-}
 
 initialBlock :: B
 initialBlock = B
-  { bBlocks  = Map.singleton [0] ((0,0),(400,400))
+  { bBlocks  = Map.singleton [0] ((0,0),(399,399))
   , bOrder   = 0
   , bCounter = 1
   , bPaints  = Map.empty
   , bHistory = []
-  , bMerge   = []
+  -- , bImage -- initialize later
   }
 
 --------------------------------------
 
+-- initialize bImage here. you must call it at first.
+initS :: BState()
+initS = do
+  bImage <- createMutableImage 400 400 (PixelRGBA8 255 255 255 255)
+  modify (\b-> b{bImage=bImage})
+
 programS :: Program -> BState ()
-programS prog =
+programS prog = do
+  initS
   mapM_ programLineS prog
+
 
 programLineS :: ProgramLine -> BState ()
 programLineS (Comment s) = return ()
@@ -100,9 +113,12 @@ moveS (LCutMove (BlockId bid) Horizontal (LineNumber y)) = do
 
 
 moveS (ColorMove (BlockId bid) (Color r g b a)) = do
-  B{bBlocks=bBlocks, bOrder=bOrder, bPaints=bPaints} <- get
+  B{bBlocks=bBlocks, bOrder=bOrder, bPaints=bPaints, bImage=bImage} <- get
   let (bl,tr) = bBlocks Map.! bid
       paint = Paint{pBlock=(bl,tr),pColor=(r,g,b,a),pBid=bid,pOrder=bOrder}
+      pix = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
+  -- update image
+  sequence_[writePixel bImage i j pix | (i,j)<-range(bl,tr) ]
   modify (\b-> b{bOrder=(bOrder+1), bPaints=Map.insert bid paint bPaints})
 
 
@@ -138,12 +154,12 @@ data B = B
   , bOrder   :: Int
   , bCounter :: Int
   , bPaints  :: Map.Map [Int] Paint
+  , bImage   :: MutableImage RealWorld PixelRGBA8
   , bHistory :: Program
-  , bMerge   :: [[Int]]
   }
-  deriving Show
 
-type BState a = State B a
+
+type BState a = StateT B IO a
 
 type BottomLeft = (Int,Int)
 type TopRight = (Int,Int)

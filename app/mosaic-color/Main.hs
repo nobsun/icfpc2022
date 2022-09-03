@@ -1,6 +1,7 @@
 module Main where
 
 import Codec.Picture
+import Codec.Picture.Types
 import Data.List
 import System.Environment
 
@@ -9,18 +10,24 @@ import qualified Data.Map.Lazy as Map
 
 import Oga
 
+--distancePixel :: PixelRGBA8 -> PixelRGBA8 -> Int
+distancePixel (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
+  (r1-r2)^2 + (g1-g2)^2 + (b1-b2)^2 + (a1-a2)^2
 
+--distance :: Image PixelRGBA8 -> (Int,Int) -> (Int,Int) -> Int
 distance img (a,b) (c,d) =
-    (r1-r2)^2 + (g1-g2)^2 + (b1-b2)^2 + (a1-a2)^2
+  distancePixel p1 p2
   where
-    PixelRGBA8 r1 g1 b1 a1 = pixelAt img (bd 0 w a) (bd 0 w b)
-    PixelRGBA8 r2 g2 b2 a2 = pixelAt img (bd 0 h c) (bd 0 h d)
+    p1 = pixelAt img (bd 0 w a) (bd 0 w b)
+    p2 = pixelAt img (bd 0 h c) (bd 0 h d)
     w = imageWidth img
     h = imageHeight img
 
 
 bd a b n = (min (b-1) (max a n))
 
+
+------------------------------------------------
 
 -- できるだけpcutよりもlcutを使うようにしてみたがイマイチ
 mosaic2S :: Int -> Image PixelRGBA8 -> [Int] -> BState ()
@@ -83,6 +90,7 @@ averageColor (bx,by) (tx,ty) img = p
     w = imageWidth img
     h = imageHeight img
 
+
 ------------------------------------
 
 main :: IO ()
@@ -91,6 +99,9 @@ main = do
   Right dynImg <- readImage fname
   case dynImg of
     ImageRGBA8 img -> do
-      mapM_ print $ reverse $ bHistory $ execState (mosaicS 6 img [0]) initialBlock
---      mapM_ print $ reverse $ bHistory $ execState (mosaic2S 10 img [0]) initialBlock
+      s <- execStateT (initS >> mosaicS 6 img [0]) initialBlock
+--      s <- execStateT (mosaic2S 10 img [0]) initialBlock
+      mapM_ print $ reverse $ bHistory s
+      rawImage <- freezeImage $ bImage s
+      writePng (fname++".mosaic.png") rawImage
 
