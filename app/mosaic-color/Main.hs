@@ -10,6 +10,7 @@ import qualified Data.Map.Lazy as Map
 import Oga
 
 
+mosaicS :: Int -> Image PixelRGBA8 -> [Int] -> BState ()
 mosaicS 0 img bid = do
   B{bBlocks=bBlocks} <- get
   let (bl,tr) = bBlocks Map.! bid
