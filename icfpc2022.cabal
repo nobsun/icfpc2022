@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5c2ff0f9c0d4981436de3cf24045f72bbb691f44e63e8bfc5db3e72a9523e9bf
+-- hash: 517b6d8aacb8c525455810b7912d7bcd03f04f2eb6e9eb739d6764181608bcce
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       src
   build-depends:
       JuicyPixels
+    , aeson
     , array
     , base >=4.7 && <5
     , bytestring

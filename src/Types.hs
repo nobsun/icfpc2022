@@ -3,8 +3,11 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Types where
 
+import qualified Data.Aeson as JSON
+import Data.Aeson.TH
 import Data.Char
 import qualified Data.Map as Map
 import Data.List
@@ -235,3 +238,48 @@ loadISL :: FilePath -> IO [Move]
 loadISL fname = do
   s <- readFile fname
   return [read l | l <- lines s, not ("#" `isPrefixOf` l)]
+
+
+
+data InitialConfig
+  = InitialConfig
+  { icWidth :: !Int
+  , icHeight :: !Int
+  , icBlocks :: [ICBlock]
+  }
+  deriving (Show)
+
+data ICBlock
+  = ICBlock
+  { icbBlockId :: String
+  , icbBottomLeft :: Point
+  , icbTopRight :: Point
+  , icbColor :: Color
+  }
+  deriving (Show)
+
+$(deriveJSON defaultOptions{fieldLabelModifier = (\(c:cs) -> toLower c : cs) . drop 2} ''InitialConfig)
+
+$(deriveJSON defaultOptions{fieldLabelModifier = (\(c:cs) -> toLower c : cs) . drop 3} ''ICBlock)
+
+loadInitialConfig :: FilePath -> IO InitialConfig
+loadInitialConfig fname = do
+  ret <- JSON.decodeFileStrict' fname
+  case ret of
+    Just ic -> return ic
+    Nothing -> fail "fail to parse initial configuration"
+
+defaultInitialConfig :: InitialConfig
+defaultInitialConfig
+  = InitialConfig
+  { icWidth = 400
+  , icHeight = 400
+  , icBlocks =
+      [ ICBlock
+        { icbBlockId = "0"
+        , icbBottomLeft = (0, 0)
+        , icbTopRight = (400, 400)
+        , icbColor = (255, 255, 255, 255)
+        }
+      ]
+  }

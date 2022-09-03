@@ -37,6 +37,8 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - aeson
 
 executables:
   icfpc2022:
