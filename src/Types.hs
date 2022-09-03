@@ -1,6 +1,8 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 module Types where
 
 import Data.Char
@@ -13,7 +15,7 @@ import Numeric
 import Text.ParserCombinators.ReadP
 
 type BitmapData = Gloss.BitmapData
-type Canvas = BitmapData
+type Canvas = Shape
 
 type Color = RGBA
 type RGBA = (Int, Int, Int, Int)
@@ -160,12 +162,16 @@ dispBlock tbl = \ case
 
 -- World
 
+type BlockTable = Map.Map BlockId Block
+
 data World 
     = World
-    { prog        :: [Instruction]
+    { canvas      :: Shape
+    , prog        :: [Instruction]
     , counter     :: Int
-    , blocks      :: Map.Map BlockId Block
+    , blocks      :: BlockTable 
     , pict        :: Gloss.Picture
+    , costs       :: [Int]
     }
 
 instance Show World where
@@ -173,17 +179,21 @@ instance Show World where
         World { blocks = tbl }
             -> unlines (map (dispBlockEntry tbl) (Map.assocs tbl))
 
-
-
-initialWorld :: [Instruction] -> World
-initialWorld is
+initializeWorld :: Canvas -> [Instruction] -> World
+initializeWorld cvs is
     = World
-    { prog = is
+    { canvas = cvs
+    , prog = is
     , counter = 0
     , blocks = Map.singleton [0] 
                  (SimpleBlock (Rectangle (0,0) (400, 400)) white)
     , pict   = undefined
+    , costs  = [0]
     }
+
+initialWorld :: World
+initialWorld = initializeWorld (Rectangle (0,0) (399,399)) []
+
 
 white :: Color
 white = (255,255,255,255)

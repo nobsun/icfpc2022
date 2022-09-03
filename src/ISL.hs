@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 module ISL where
 
 import qualified Data.Map as Map
@@ -49,7 +50,7 @@ interp pl world = case pl of
 -}
 lcut :: BlockId -> Orientation -> Offset -> Instruction
 lcut bid o off world = case world of
-    World { blocks  = tbl0 } -> world { blocks = tbl3 }
+    World { canvas = cnvs, blocks  = tbl0, costs = cs } -> world { blocks = tbl3, costs = c:cs }
         where
             b0@(bid0, block0) = (0:bid, SimpleBlock shp0 col)
             b1@(bid1, block1) = (1:bid, SimpleBlock shp1 col)
@@ -69,6 +70,7 @@ lcut bid o off world = case world of
             tbl1 = uncurry Map.insert b0 tbl0
             tbl2 = uncurry Map.insert b1 tbl1
             tbl3 = Map.delete bid tbl2
+            c = cost (size cnvs) 7 tbl0 bid
 
 {- | pcut : Point Cut Move instruction
 >>> bs  = [([1], SimpleBlock (Rectangle (0,0) (40, 50)) green), ([2], SimpleBlock (Rectangle (0,50) (40, 400)) red), ([3], SimpleBlock (Rectangle (40,0) (400, 400)) white)]
@@ -91,7 +93,7 @@ lcut bid o off world = case world of
 -}
 pcut :: BlockId -> Point -> Instruction
 pcut bid (mx,my) world = case world of
-    World { blocks = tbl0 } -> world { blocks = tbl2 }
+    World { canvas = cnvs, blocks = tbl0, costs = cs } -> world { blocks = tbl2, costs = c:cs }
         where
             b0@(bid0, block0) = (0:bid, SimpleBlock shp0 col)
             b1@(bid1, block1) = (1:bid, SimpleBlock shp1 col)
@@ -107,11 +109,19 @@ pcut bid (mx,my) world = case world of
             shp3 = Rectangle (x0,my) (mx,y1)
             tbl1 = foldr (uncurry Map.insert) tbl0 [b0, b1, b2, b3]
             tbl2 = Map.delete bid tbl1 
+            c = cost (size cnvs) 10 tbl0 bid
 
 colormove :: BlockId -> Color -> Instruction
-colormove bid (r,g,b,a) world = case world of
-    World { blocks = tbl0 } -> world { blocks = undefined }
+colormove bid col world = case world of
+    World { canvas = cvs, blocks = tbl0, costs = cs } 
+        -> world { blocks = setColor col bid (blocks world) , costs = c:cs}
+            where
+                c = cost (size cvs) 5 tbl0 bid 
 
+setColor :: Color -> BlockId -> Map.Map BlockId Block -> Map.Map BlockId Block
+setColor c bid tbl = case tbl Map.! bid of
+    SimpleBlock shp _   -> Map.update (const $ Just $ SimpleBlock shp c) bid tbl
+    ComplexBlock shp bs -> foldr (setColor c) tbl bs
 
 swapmove :: BlockId -> BlockId -> Instruction
 swapmove bid1 bid2 world = case world of
@@ -121,3 +131,27 @@ mergemove :: BlockId -> BlockId -> Instruction
 mergemove bid1 bid2 world = case world of
     World {} -> undefined
 
+
+
+cost :: Int -> Int -> BlockTable -> BlockId -> Int
+cost csz base tbl bid 
+    = roundUpOn5 $ fromIntegral base * fromIntegral csz / fromIntegral (size (shape block))
+    where
+        block = tbl Map.! bid
+
+size :: Shape -> Int
+size = \ case
+    Rectangle (x0, y0) (x1, y1) -> succ (x1 - x0) * succ (y1 - y0)
+
+{- | roundUpOn5: 四捨五入
+>>> roundUpOn5 4.5
+5
+>>> roundUpOn5 5.5
+6
+-}
+roundUpOn5 :: (RealFrac a, Integral b) => a -> b
+roundUpOn5 x = if
+    | n <= -0.5 -> m - 1
+    | n >=  0.5 -> m + 1
+    | otherwise -> m
+    where (m, n) = properFraction x
