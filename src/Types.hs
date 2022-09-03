@@ -37,6 +37,8 @@ data Shape
     deriving (Eq, Show)
 
 type Id = Int
+
+-- Note that numbers are reversed
 type BlockId = [Int]
 
 instance {-# Overlapping #-} Read BlockId where
@@ -208,3 +210,10 @@ incCount world = (cnt, world { counter = succ cnt })
         cnt = counter world
 
 type Instruction = World -> World
+
+
+
+loadISL :: FilePath -> IO [Move]
+loadISL fname = do
+  s <- readFile fname
+  return [read l | l <- lines s, not ("#" `isPrefixOf` l)]
