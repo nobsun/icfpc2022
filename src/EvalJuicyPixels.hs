@@ -12,22 +12,27 @@ import Control.Monad.RWS
 import Control.Monad.ST
 import Data.List (isPrefixOf)
 import qualified Data.Map.Strict as Map
+import Data.Monoid (Sum (..))
 
 import Types
 
--- TODO: コスト計算
 
 -- ((x,y), (w,h))
 type Rect = ((Int,Int), (Int,Int))
 
-type M m = RWST (MutableImage (PrimState m) PixelRGBA8) () (Int, Map.Map BlockId Rect) m
+type M m = RWST (MutableImage (PrimState m) PixelRGBA8) (Sum Integer) (Int, Map.Map BlockId Rect) m
 
 
 evalISL :: (Int, Int) -> [Move] -> Image PixelRGBA8
-evalISL (w,h) moves = runST $ do
+evalISL size moves = fst $ evalISLWithCost size moves
+
+
+evalISLWithCost :: (Int, Int) -> [Move] -> (Image PixelRGBA8, Integer)
+evalISLWithCost (w,h) moves = runST $ do
   img <- createMutableImage w h (PixelRGBA8 255 255 255 255)
-  (_, _s, _w) <- runRWST (mapM_ evalMove moves) img (0, Map.singleton [0] ((0,0),(w,h)))
-  unsafeFreezeImage img
+  (_, _s, cost) <- runRWST (mapM_ evalMove moves) img (0, Map.singleton [0] ((0,0),(w,h)))
+  img' <- unsafeFreezeImage img
+  return (img', getSum cost)
 
 
 evalMove :: PrimMonad m => Move -> M m ()
@@ -42,6 +47,8 @@ evalMove (COLOR bid (r,g,b,a)) = do
       forM_ [y..y+h-1] $ \y' -> do
         forM_ [x..x+w-1] $ \x' -> do
           writePixel img x' (mutableImageHeight img - 1 - y') px
+      canvasSize <- getCanvasSize
+      addCost $ 5 * canvasSize / fromIntegral (w * h)
 evalMove (LCUT bid orientation offset) = do
   (cnt, blocks) <- get
   case Map.lookup bid blocks of
@@ -64,6 +71,8 @@ evalMove (LCUT bid orientation offset) = do
               Map.insert (bid ++ [1]) ((x,offset),(w,y+h-offset)) $
               Map.delete bid blocks
             )
+      canvasSize <- getCanvasSize
+      addCost $ 7 * canvasSize / fromIntegral (w * h)
 evalMove (PCUT bid (x1,y1)) = do
   (cnt, blocks) <- get
   case Map.lookup bid blocks of
@@ -81,6 +90,8 @@ evalMove (PCUT bid (x1,y1)) = do
             , (bid ++ [3], ((x,  y1), (x1-x,   y+h-y1)))
             ]
         )
+      canvasSize <- getCanvasSize
+      addCost $ 10 * canvasSize / fromIntegral (w * h)
 evalMove (SWAP bid1 bid2) = do
   (cnt, blocks) <- get
   case Map.lookup bid1 blocks of
@@ -101,6 +112,8 @@ evalMove (SWAP bid1 bid2) = do
             ( cnt
             , Map.insert bid2 ((x1,y1),size1) $ Map.insert bid1 ((x2,y2),size2) $ blocks
             )
+          canvasSize <- getCanvasSize
+          addCost $ 3 * canvasSize / fromIntegral (w1 * h1)
 evalMove (MERGE bid1 bid2) = do
   (cnt, blocks) <- get
   case Map.lookup bid1 blocks of
@@ -118,6 +131,18 @@ evalMove (MERGE bid1 bid2) = do
             put (cnt', Map.insert bid3 ((min x1 x2, y1), (w1+w2, h1)) blocks')
           else do
             undefined
+          canvasSize <- getCanvasSize
+          addCost $ 1 * canvasSize / fromIntegral (max (w1 * h1) (w2 * h2))
+
+
+getCanvasSize :: Monad m => M m Double
+getCanvasSize = do
+  img <- ask
+  return $ fromIntegral $ mutableImageWidth img * mutableImageHeight img
+
+
+addCost :: Monad m => Double -> M m ()
+addCost c = tell $ Sum (round c)
 
 
 sampleMoves =
@@ -237,7 +262,9 @@ similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight
 
 test_similarity = do
   Right (ImageRGBA8 img1) <- readImage "probs/1.png"
-  let img2 = evalISL (400, 400) sampleMoves
-  print (similarity img1 img1)
-  print (similarity img2 img2)
+  let (img2, c) = evalISLWithCost (400, 400) sampleMoves
+  print c
+  print $ similarity img1 img1 == 0
+  print $ similarity img2 img2 == 0
   print (similarity img1 img2)
+  print $ similarity img1 img2 + c  -- should be 48403, but ...
