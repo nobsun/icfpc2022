@@ -68,6 +68,15 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+  layer:
+    main:                Main.hs
+    source-dirs:         app/layer
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
   eval:
     main:                Main.hs
     source-dirs:         app/eval
