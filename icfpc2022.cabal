@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 52b75f71bd19d9d6e76865e8468e520818dc8cfd3fe1ddf3b3fd33c12df67950
+-- hash: 651b65b877978879704a66096fbb0f5805644a7a4cbae8fe8cbf39feb6f56e0c
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       ApiJSON
+      ApiUtil
       Block
       Content
       EvalContent
@@ -47,9 +48,11 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , filepath
     , gloss
     , mtl
     , primitive
+    , process
     , time
     , vector
   default-language: Haskell2010

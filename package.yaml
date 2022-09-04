@@ -29,6 +29,8 @@ library:
   source-dirs: src
   dependencies:
   - bytestring
+  - filepath
+  - process
   - time
   - aeson
   - vector
