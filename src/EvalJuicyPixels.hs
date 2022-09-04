@@ -3,8 +3,6 @@ module EvalJuicyPixels
   , evalISLWithCost
   , initialize
   , evalMove
-  , similarity
-  , pixelDiff
   ) where
 
 import Codec.Picture
@@ -179,132 +177,13 @@ getCanvasSize = do
 
 
 addCost :: Monad m => Double -> M m ()
-addCost c = tell $ Sum (round' c)
-
-
-sampleMoves =
-  [ COLOR (V.fromList [0]) (0,74,173,255)
-  , PCUT (V.fromList [0]) (360,40)
-  , PCUT (V.fromList [0,3]) (320,80)
-  , COLOR (V.fromList [0,3,3]) (0,0,0,255)
-  , PCUT (V.fromList [0,3,3]) (160,240)
-  --
-  , PCUT (V.fromList [0,3,3,0]) (80,160)
-  , PCUT (V.fromList [0,3,3,0,0]) (40,120)
-  , COLOR (V.fromList [0,3,3,0,0,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,0,0,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,0,1]) (120,120)
-  , COLOR (V.fromList [0,3,3,0,1,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,0,1,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,0,2]) (120,200)
-  , COLOR (V.fromList [0,3,3,0,2,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,0,2,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,0,3]) (40,200)
-  , COLOR (V.fromList [0,3,3,0,3,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,0,3,3]) (255,255,255,255)
-  --
-  , PCUT (V.fromList [0,3,3,1]) (240,160)
-  , PCUT (V.fromList [0,3,3,1,0]) (200,120)
-  , COLOR (V.fromList [0,3,3,1,0,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,1,0,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,1,1]) (280,120)
-  , COLOR (V.fromList [0,3,3,1,1,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,1,1,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,1,2]) (280,200)
-  , COLOR (V.fromList [0,3,3,1,2,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,1,2,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,1,3]) (200,200)
-  , COLOR (V.fromList [0,3,3,1,3,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,1,3,3]) (255,255,255,255)
-  --
-  , PCUT (V.fromList [0,3,3,2]) (240,320)
-  , PCUT (V.fromList [0,3,3,2,0]) (200,280)
-  , COLOR (V.fromList [0,3,3,2,0,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,2,0,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,2,1]) (280,280)
-  , COLOR (V.fromList [0,3,3,2,1,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,2,1,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,2,2]) (280,360)
-  , COLOR (V.fromList [0,3,3,2,2,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,2,2,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,2,3]) (200,360)
-  , COLOR (V.fromList [0,3,3,2,3,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,2,3,3]) (255,255,255,255)
-  --
-  , PCUT (V.fromList [0,3,3,3]) (80,320)
-  , PCUT (V.fromList [0,3,3,3,0]) (40,280)
-  , COLOR (V.fromList [0,3,3,3,0,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,3,0,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,3,1]) (120,280)
-  , COLOR (V.fromList [0,3,3,3,1,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,3,1,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,3,2]) (120,360)
-  , COLOR (V.fromList [0,3,3,3,2,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,3,2,3]) (255,255,255,255)
-  , PCUT (V.fromList [0,3,3,3,3]) (40,360)
-  , COLOR (V.fromList [0,3,3,3,3,1]) (255,255,255,255)
-  , COLOR (V.fromList [0,3,3,3,3,3]) (255,255,255,255)
-  --
-  , COLOR (V.fromList [0,3,0]) (0,0,0,255)
-  , LCUT (V.fromList [0,3,0]) X 160
-  , LCUT (V.fromList [0,3,0,0]) X 80
-  , LCUT (V.fromList [0,3,0,0,0]) X 40
-  , COLOR (V.fromList [0,3,0,0,0,0]) (255,255,255,255)
-  , LCUT (V.fromList [0,3,0,0,1]) X 120
-  , COLOR (V.fromList [0,3,0,0,1,0]) (255,255,255,255)
-  , LCUT (V.fromList [0,3,0,1]) X 240
-  , LCUT (V.fromList [0,3,0,1,0]) X 200
-  , COLOR (V.fromList [0,3,0,1,0,0]) (255,255,255,255)
-  , LCUT (V.fromList [0,3,0,1,1]) X 280
-  , COLOR (V.fromList [0,3,0,1,1,0]) (255,255,255,255)
-  --
-  , COLOR (V.fromList [0,3,2]) (0,0,0,255)
-  , LCUT (V.fromList [0,3,2]) Y 240
-  , LCUT (V.fromList [0,3,2,0]) Y 160
-  , LCUT (V.fromList [0,3,2,0,0]) Y 120
-  , COLOR (V.fromList [0,3,2,0,0,1]) (255,255,255,255)
-  , LCUT (V.fromList [0,3,2,0,1]) Y 200
-  , COLOR (V.fromList [0,3,2,0,1,1]) (255,255,255,255)
-  , LCUT (V.fromList [0,3,2,1]) Y 320
-  , LCUT (V.fromList [0,3,2,1,0]) Y 280
-  , COLOR (V.fromList [0,3,2,1,0,1]) (255,255,255,255)
-  , LCUT (V.fromList [0,3,2,1,1]) Y 360
-  , COLOR (V.fromList [0,3,2,1,1,1]) (255,255,255,255)
-  ]
+addCost c = tell $ Sum (roundJS c)
 
 
 test = do
   case evalISL defaultInitialConfig sampleMoves of
     Left err -> fail err
     Right img -> writePng "test.png" img
-
-
-similarity :: Image PixelRGBA8 -> Image PixelRGBA8 -> Integer
-similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight img1 == imageHeight img2) $
-  round' $ (alpha *) $ sum $
-    [ pixelDiff p1 p2
-    | y <- [0 .. imageHeight img1 - 1]
-    , x <- [0 .. imageWidth img1 - 1]
-    , let p1 = pixelAt img1 x y, let p2 = pixelAt img2 x y
-    ]
-  where
-    alpha = 0.005
-
-
-pixelDiff :: PixelRGBA8 -> PixelRGBA8 -> Double
-pixelDiff (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
-  sqrt $ sum
-    [ (fromIntegral r1 - fromIntegral r2)^(2::Int)
-    , (fromIntegral g1 - fromIntegral g2)^(2::Int)
-    , (fromIntegral b1 - fromIntegral b2)^(2::Int)
-    , (fromIntegral a1 - fromIntegral a2)^(2::Int)
-    ]
-
-
--- Haskell の round は偶数丸めだが、JavascriptのMath.roundは四捨五入なので、それに合わせる
--- https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Math/round
-round' :: (RealFrac a, Integral b) => a -> b
-round' x = floor (x + 0.5)
 
 
 test_similarity = do
