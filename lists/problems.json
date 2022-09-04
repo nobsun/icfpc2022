@@ -1,0 +1,284 @@
+{
+  "problems": [
+    {
+      "id": 1,
+      "name": "Chess Table",
+      "description": "Our beloved chess board is in the essence of this year’s ICFP Contest. Chess Table has been an influential part of our thinking in terms of the capabilities of the RoboPainters as well as the nature of different problems. That's why Chess Table is the first piece of art we expect your RoboPainters to put their brushes on.",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/1.png"
+    },
+    {
+      "id": 2,
+      "name": "RoboPainter",
+      "description": "RoboPainter is the generic name for the class algorithms designed by a brilliant and esoteric group of people called functional programmers. Best RoboPainter will be awarded the honor medal of Leonardo Da Vinci, the RoboVinci Medal.\n\nDo your best to get the Medal, if not then RoboPainter might whisper Da Vinci's last words “I have offended God and mankind because my work did not reach the quality it should have.”",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/2.png"
+    },
+    {
+      "id": 3,
+      "name": "Tetris Game",
+      "description": "Next in line is the game that never ends with the player's victory: Tetris.\n\nAs the ancient and sacred game of computer scientists, it has taken its rightful place among the first class of problems for the ICFP Contest 2022.",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/3.png"
+    },
+    {
+      "id": 4,
+      "name": "ICFP Programming Contest Logo",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/4.png"
+    },
+    {
+      "id": 5,
+      "name": "ICFP 2022 Logo",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/5.png"
+    },
+    {
+      "id": 6,
+      "name": "Haskell Coder's View",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/6.png"
+    },
+    {
+      "id": 7,
+      "name": "Slovenia Flag",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/7.png"
+    },
+    {
+      "id": 8,
+      "name": "Thank You",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/8.png"
+    },
+    {
+      "id": 9,
+      "name": "SimpLisa",
+      "description": "Leonardo da Vinci used epochal and innovative techniques to paint Mona Lisa. We anticipate that your Robopainters will honor this unique piece of art with the same respect.",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/9.png"
+    },
+    {
+      "id": 10,
+      "name": "Starry Night",
+      "description": "Starry, starry night\nPaint your palette blue and gray\nLook out on a summer's day\nWith eyes that know the darkness in my soul\n\nThis song will accompany your long coding hours! [https://open.spotify.com/track/0VNzEY1G4GLqcNx5qaaTl6?si=a26367a150354442](https://open.spotify.com/track/0VNzEY1G4GLqcNx5qaaTl6?si=a26367a150354442)\n\nThe Starry Night is considered to be the pinnacle of Van Gogh's achievement. We hope that your painting will be so too!",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/10.png"
+    },
+    {
+      "id": 11,
+      "name": "Curves",
+      "description": "  ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/11.png"
+    },
+    {
+      "id": 12,
+      "name": "SIGPLAN-M",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/12.png"
+    },
+    {
+      "id": 13,
+      "name": "Not So SimpLisa",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/13.png"
+    },
+    {
+      "id": 14,
+      "name": "Objects Lying Around",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/14.png"
+    },
+    {
+      "id": 15,
+      "name": "Simply Screaming",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/15.png"
+    },
+    {
+      "id": 16,
+      "name": "\"The\" Mona Lisa",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/16.png"
+    },
+    {
+      "id": 17,
+      "name": "\"The\" Starry Night",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/17.png"
+    },
+    {
+      "id": 18,
+      "name": "\"The\" Kiss",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/18.png"
+    },
+    {
+      "id": 19,
+      "name": "\"The\" Girl with a Pearl Earring",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/19.png"
+    },
+    {
+      "id": 20,
+      "name": "\"The\" Son of Man",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/20.png"
+    },
+    {
+      "id": 21,
+      "name": "Special Request",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/21.png"
+    },
+    {
+      "id": 22,
+      "name": "Godfather",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/22.png"
+    },
+    {
+      "id": 23,
+      "name": "Beatles",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/23.png"
+    },
+    {
+      "id": 24,
+      "name": "Inception",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/24.png"
+    },
+    {
+      "id": 25,
+      "name": "\"The Girl\"",
+      "description": " ",
+      "canvas_link": " ",
+      "initial_config_link": " ",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/25.png"
+    },
+    {
+      "id": 26,
+      "name": "Puzzled Logo",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/26.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/26.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/26.png"
+    },
+    {
+      "id": 27,
+      "name": "Confused Robo Painter",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/27.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/27.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/27.png"
+    },
+    {
+      "id": 28,
+      "name": "Obfuscated Starry Night",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/28.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/28.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/28.png"
+    },
+    {
+      "id": 29,
+      "name": "Unrecognizable Kiss",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/29.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/29.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/29.png"
+    },
+    {
+      "id": 30,
+      "name": "Blocked Curves",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/30.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/30.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/30.png"
+    },
+    {
+      "id": 31,
+      "name": "tepInncio",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/31.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/31.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/31.png"
+    },
+    {
+      "id": 32,
+      "name": "LiaSmpis",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/32.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/32.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/32.png"
+    },
+    {
+      "id": 33,
+      "name": "TSchreaem",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/33.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/33.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/33.png"
+    },
+    {
+      "id": 34,
+      "name": "SvloFelagnai",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/34.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/34.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/34.png"
+    },
+    {
+      "id": 35,
+      "name": "lThrGei",
+      "description": " ",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/35.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/35.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/35.png"
+    }
+  ]
+}
