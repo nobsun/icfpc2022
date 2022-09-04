@@ -279,6 +279,46 @@
       "canvas_link": "https://cdn.robovinci.xyz/imageframes/35.initial.png",
       "initial_config_link": "https://cdn.robovinci.xyz/imageframes/35.initial.json",
       "target_link": "https://cdn.robovinci.xyz/imageframes/35.png"
+    },
+    {
+      "id": 36,
+      "name": "Starry Nights",
+      "description": "Coefficients are adjusted for this problem. Please checkout the Full Division v.2 Section in the specification.",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/36.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/36.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/36.png"
+    },
+    {
+      "id": 37,
+      "name": "Emre's Lisa",
+      "description": "Coefficients are adjusted for this problem. Please checkout the Full Division v.2 Section in the specification.",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/37.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/37.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/37.png"
+    },
+    {
+      "id": 38,
+      "name": "2 Seasons",
+      "description": "Coefficients are adjusted for this problem. Please checkout the Full Division v.2 Section in the specification.",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/38.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/38.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/38.png"
+    },
+    {
+      "id": 39,
+      "name": "The Other 2 Seasons",
+      "description": "Coefficients are adjusted for this problem. Please checkout the Full Division v.2 Section in the specification.",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/39.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/39.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/39.png"
+    },
+    {
+      "id": 40,
+      "name": "Logo Wars",
+      "description": "Coefficients are adjusted for this problem. Please checkout the Full Division v.2 Section in the specification.",
+      "canvas_link": "https://cdn.robovinci.xyz/imageframes/40.initial.png",
+      "initial_config_link": "https://cdn.robovinci.xyz/imageframes/40.initial.json",
+      "target_link": "https://cdn.robovinci.xyz/imageframes/40.png"
     }
   ]
 }
