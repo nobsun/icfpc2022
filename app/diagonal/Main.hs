@@ -16,12 +16,7 @@ import Debug.Trace
 import Oga
 
 
-distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
-  ((f r1)-(f r2))^2 + ((f g1)-(f g2))^2 + ((f b1)-(f b2))^2
-  where
-    f = fromIntegral
-
-distanceI xs ys =
+distance xs ys =
   sum $ zipWith f xs ys
   where
     f x y = ((fromIntegral x)-(fromIntegral y))^2
@@ -50,16 +45,35 @@ leastSquare xs =
     a = fromIntegral $ length xs
     b = fromIntegral $ -2*(sum xs)
 
+-- approximate cost
+cost (0,y) =
+  (7+1)* (160000`div`max y (400-y)) + 5*(160000`div`(400*(400-y)))
+cost (x,0) =
+  (7+1)* (160000`div`max x (400-x)) + 5*(160000`div`((400-x)*400))
+cost (x,y) =
+  10 + 5*160000`div`((400-x)*(400-y)) + sum[max(cs!!i)(cs!!j) |(i,j)<-bs] + 200
+  where
+    cs = map (160000`div`) [x*y,(400-x)*y,(400-x)*(400-y),x*(400-y)]
+    bs = case (x<200,x<y) of
+          (True,True) -> [(1,0),(2,3)]
+          (True,False)-> [(3,0),(2,1)]
+          (False,True)-> [(1,2),(0,3)]
+          _           -> [(3,2),(0,1)]
 
+    
 ------------------------------------------------
 
-diagonalS :: Int -> Int -> Image PixelRGBA8 -> [Int] -> BState [Int]
-diagonalS size threshold img bid =
+diagonalS :: Int -> Image PixelRGBA8 -> [Int] -> BState [Int]
+diagonalS size img bid =
   foldlM (\bid' (x,y) -> do
       B{bImage=bimg} <- get
-      let color1 = map leastSquare $　pixelBoxAt (x,y) size img
+      let box = pixelBoxAt (x,y) size img
+          color1 = map leastSquare box
+          eff = sum $ zipWith distance box (map repeat color1)
       color2 <- fmap (map leastSquare) $ readPixelBox (x,y) size bimg
-      if distanceI color1 color2 > threshold then paint bid' (x,y) color1 else return bid'
+      if (distance color1 color2) > cost (x,y) + eff -- is it worth the cost?
+        then paint bid' (x,y) color1
+        else return bid'
     ) bid (concat[[(j,i-j)| j<-[0,size..i], 0<=i,i<=399,0<=j,j<=399]|i<-[0,size..2*399-size]])
   where
     paint :: [Int] -> (Int,Int) -> [Int] -> BState [Int]
@@ -93,10 +107,10 @@ diagonalS size threshold img bid =
 
 main :: IO ()
 main = do
-  [size,threshold,fname] <- getArgs
+  [size,fname] <- getArgs
   Right dynImg <- readImage fname
   case dynImg of
     ImageRGBA8 img -> do
-      s <- execStateT (initS >> diagonalS (read size) (read threshold) img [0]) initialBlock
+      s <- execStateT (initS >> diagonalS (read size) img [0]) initialBlock
       mapM_ print $ reverse $ bHistory s
       freezeImage (bImage s) >>= writePng (fname++".diagonal.png")
