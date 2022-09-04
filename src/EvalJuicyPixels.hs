@@ -1,6 +1,8 @@
 module EvalJuicyPixels
   ( evalISL
   , evalISLWithCost
+  , initialize
+  , evalMove
   , similarity
   , pixelDiff
   ) where
@@ -30,8 +32,18 @@ evalISL config moves = fmap fst $ evalISLWithCost config moves
 
 evalISLWithCost :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8, Integer)
 evalISLWithCost config moves = runST $ do
-  img <- createMutableImage (icWidth config) (icHeight config) (PixelRGBA8 255 255 255 255)
+  (img, s) <- initialize config
+  (ret, _s, cost) <- runRWST (runExceptT (mapM_ evalMoveM moves)) img s
+  case ret of
+    Left err -> return (Left err)
+    Right _ -> do
+      img' <- unsafeFreezeImage img
+      return (Right (img', getSum cost))
 
+
+initialize :: PrimMonad m => InitialConfig -> m (MutableImage (PrimState m) PixelRGBA8, (Int, Map.Map BlockId Shape))
+initialize config = do
+  img <- createMutableImage (icWidth config) (icHeight config) (PixelRGBA8 255 255 255 255)
   forM_ (icBlocks config) $ \block -> do
     let (x1,y1) = icbBottomLeft block
         (x2,y2) = icbTopRight block
@@ -48,16 +60,24 @@ evalISLWithCost config moves = runST $ do
         | block <- icBlocks config
         ]
 
-  (ret, _s, cost) <- runRWST (runExceptT (mapM_ evalMove moves)) img (cnt, blocks)
+  return (img, (cnt, blocks))
+
+
+evalMove
+  :: PrimMonad m
+  => MutableImage (PrimState m) PixelRGBA8
+  -> (Int, Map.Map BlockId Shape)
+  -> Move
+  -> m (Either String ((Int, Map.Map BlockId Shape), Integer))
+evalMove img s move = do
+  (ret, s', cost) <- runRWST (runExceptT (evalMoveM move)) img s
   case ret of
     Left err -> return (Left err)
-    Right _ -> do
-      img' <- unsafeFreezeImage img
-      return (Right (img', getSum cost))
+    Right _ -> return (Right (s', getSum cost))
 
 
-evalMove :: PrimMonad m => Move -> M m ()
-evalMove (COLOR bid (r,g,b,a)) = do
+evalMoveM :: PrimMonad m => Move -> M m ()
+evalMoveM (COLOR bid (r,g,b,a)) = do
   shape@(Rectangle (x,y) (x1,y1)) <- lookupBlock bid
   img <- ask
   -- αチャンネルを考慮して色を混ぜる必要はないようだ
@@ -67,7 +87,7 @@ evalMove (COLOR bid (r,g,b,a)) = do
       writePixel img x' (mutableImageHeight img - 1 - y') px
   canvasSize <- getCanvasSize
   addCost $ 5 * canvasSize / fromIntegral (shapeSize shape)
-evalMove move@(LCUT bid orientation offset) = do
+evalMoveM move@(LCUT bid orientation offset) = do
   shape@(Rectangle (x,y) (x1,y1)) <- lookupBlock bid
   (cnt, blocks) <- get
   case orientation of
@@ -91,7 +111,7 @@ evalMove move@(LCUT bid orientation offset) = do
         )
   canvasSize <- getCanvasSize
   addCost $ 7 * canvasSize / fromIntegral (shapeSize shape)
-evalMove move@(PCUT bid (x1,y1)) = do
+evalMoveM move@(PCUT bid (x1,y1)) = do
   (cnt, blocks) <- get
   shape@(Rectangle (x0,y0) (x2,y2)) <- lookupBlock bid
   unless (x0 <= x1 && x1 <= x2 && y0 <= y1 && y1 <= y2) $
@@ -108,7 +128,7 @@ evalMove move@(PCUT bid (x1,y1)) = do
     )
   canvasSize <- getCanvasSize
   addCost $ 10 * canvasSize / fromIntegral (shapeSize shape)
-evalMove move@(SWAP bid1 bid2) = do
+evalMoveM move@(SWAP bid1 bid2) = do
   (cnt, blocks) <- get
   shape1@(Rectangle (x1,y1) _) <- lookupBlock bid1
   shape2@(Rectangle (x2,y2) _) <- lookupBlock bid2
@@ -127,7 +147,7 @@ evalMove move@(SWAP bid1 bid2) = do
     )
   canvasSize <- getCanvasSize
   addCost $ 3 * canvasSize / fromIntegral (shapeSize shape1)
-evalMove move@(MERGE bid1 bid2) = do
+evalMoveM move@(MERGE bid1 bid2) = do
   (cnt, blocks) <- get
   shape1@(Rectangle (x1,y1) (x1',y1')) <- lookupBlock bid1
   shape2@(Rectangle (x2,y2) (x2',y2')) <- lookupBlock bid2
