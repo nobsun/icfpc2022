@@ -36,6 +36,7 @@ library
       ISL
       Lib
       Oga
+      PaintMonad
       Sandbox
       Types
   other-modules:
