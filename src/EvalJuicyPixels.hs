@@ -20,10 +20,7 @@ import Data.Monoid (Sum (..))
 import Types
 
 
--- ((x,y), (w,h))
-type Rect = ((Int,Int), (Int,Int))
-
-type M m = ExceptT String (RWST (MutableImage (PrimState m) PixelRGBA8) (Sum Integer) (Int, Map.Map BlockId Rect) m)
+type M m = ExceptT String (RWST (MutableImage (PrimState m) PixelRGBA8) (Sum Integer) (Int, Map.Map BlockId Shape) m)
 
 
 evalISL :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8)
@@ -46,9 +43,8 @@ evalISLWithCost config moves = runST $ do
   let cnt = length (icBlocks config) - 1
       blocks =
         Map.fromList
-        [ ([read (icbBlockId block)], ((x1,y1), (x2-x1, y2-y1)))
+        [ ([read (icbBlockId block)], Rectangle (icbBottomLeft block) (icbTopRight block))
         | block <- icBlocks config
-        , let (x1,y1) = icbBottomLeft block, let (x2,y2) = icbTopRight block
         ]
 
   (ret, _s, cost) <- runRWST (runExceptT (mapM_ evalMove moves)) img (cnt, blocks)
@@ -61,93 +57,93 @@ evalISLWithCost config moves = runST $ do
 
 evalMove :: PrimMonad m => Move -> M m ()
 evalMove (COLOR bid (r,g,b,a)) = do
-  ((x,y), (w,h)) <- lookupBlock bid
+  shape@(Rectangle (x,y) (x1,y1)) <- lookupBlock bid
   img <- ask
   -- αチャンネルを考慮して色を混ぜる必要はないようだ
   let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
-  forM_ [y..y+h-1] $ \y' -> do
-    forM_ [x..x+w-1] $ \x' -> do
+  forM_ [y..y1-1] $ \y' -> do
+    forM_ [x..x1-1] $ \x' -> do
       writePixel img x' (mutableImageHeight img - 1 - y') px
   canvasSize <- getCanvasSize
-  addCost $ 5 * canvasSize / fromIntegral (w * h)
+  addCost $ 5 * canvasSize / fromIntegral (shapeSize shape)
 evalMove move@(LCUT bid orientation offset) = do
-  ((x,y), (w,h)) <- lookupBlock bid
+  shape@(Rectangle (x,y) (x1,y1)) <- lookupBlock bid
   (cnt, blocks) <- get
   case orientation of
     X -> do
-      unless (x <= offset && offset <= x + w) $
-        throwError ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show x ++ ".." ++ show (x + w))
+      unless (x <= offset && offset <= x1) $
+        throwError ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show x ++ ".." ++ show x1)
       put $
         ( cnt
-        , Map.insert (0 : bid) ((x,y),(offset-x,h)) $
-          Map.insert (1 : bid) ((offset,y),(x+w-offset,h)) $
+        , Map.insert (0 : bid) (Rectangle (x,y) (offset,y1)) $
+          Map.insert (1 : bid) (Rectangle (offset,y) (x1,y1)) $
           Map.delete bid blocks
         )
     Y -> do
-      unless (y <= offset && offset <= y + h) $
-        throwError ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show y ++ ".." ++ show (y + h))
+      unless (y <= offset && offset <= y1) $
+        throwError ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show y ++ ".." ++ show y1)
       put $
         ( cnt
-        , Map.insert (0 : bid) ((x,y),(w,offset-y)) $
-          Map.insert (1 : bid) ((x,offset),(w,y+h-offset)) $
+        , Map.insert (0 : bid) (Rectangle (x,y) (x1,offset)) $
+          Map.insert (1 : bid) (Rectangle (x,offset) (x1,y1)) $
           Map.delete bid blocks
         )
   canvasSize <- getCanvasSize
-  addCost $ 7 * canvasSize / fromIntegral (w * h)
+  addCost $ 7 * canvasSize / fromIntegral (shapeSize shape)
 evalMove move@(PCUT bid (x1,y1)) = do
   (cnt, blocks) <- get
-  rect@((x,y), (w,h)) <- lookupBlock bid
-  unless (x <= x1 && x1 <= x + w && y <= y1 && y1 <= y + h) $
-    throwError ("invalid move (" ++ dispMove move ++ "): " ++ show (x1,y1) ++ " not in " ++ show rect)
+  shape@(Rectangle (x0,y0) (x2,y2)) <- lookupBlock bid
+  unless (x0 <= x1 && x1 <= x2 && y0 <= y1 && y1 <= y2) $
+    throwError ("invalid move (" ++ dispMove move ++ "): " ++ show (x1,y1) ++ " not in " ++ show shape)
   put $
     ( cnt
     , Map.union (Map.delete bid blocks) $
       Map.fromList
-        [ (0 : bid, ((x,  y),  (x1-x,   y1-y)))
-        , (1 : bid, ((x1, y),  (x+w-x1, y1-y)))
-        , (2 : bid, ((x1, y1), (x+w-x1, y+h-y1)))
-        , (3 : bid, ((x,  y1), (x1-x,   y+h-y1)))
+        [ (0 : bid, Rectangle (x0, y0) (x1, y1))
+        , (1 : bid, Rectangle (x1, y0) (x2, y1))
+        , (2 : bid, Rectangle (x1, y1) (x2, y2))
+        , (3 : bid, Rectangle (x0, y1) (x1, y2))
         ]
     )
   canvasSize <- getCanvasSize
-  addCost $ 10 * canvasSize / fromIntegral (w * h)
+  addCost $ 10 * canvasSize / fromIntegral (shapeSize shape)
 evalMove move@(SWAP bid1 bid2) = do
   (cnt, blocks) <- get
-  ((x1,y1),size1@(w1,h1)) <- lookupBlock bid1
-  ((x2,y2),size2@(w2,h2)) <- lookupBlock bid2
-  unless (size1 == size2) $
-    throwError ("invalid move (" ++ dispMove move ++ "): " ++ show size1 ++ " /= " ++ show size2)
+  shape1@(Rectangle (x1,y1) _) <- lookupBlock bid1
+  shape2@(Rectangle (x2,y2) _) <- lookupBlock bid2
+  unless (shapeSize shape1 == shapeSize shape2) $
+    throwError ("invalid move (" ++ dispMove move ++ "): " ++ show (shapeSize shape1) ++ " /= " ++ show (shapeSize shape2))
   img <- ask
-  forM_ [0..h1-1] $ \i -> do
-    forM_ [0..w1-1] $ \j -> do
+  forM_ [0 .. shapeHeight shape1 - 1] $ \i -> do
+    forM_ [0 .. shapeWidth shape1 - 1] $ \j -> do
       px1 <- readPixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i))
       px2 <- readPixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i))
       writePixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i)) px2
       writePixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i)) px1
   put $
     ( cnt
-    , Map.insert bid2 ((x1,y1),size1) $ Map.insert bid1 ((x2,y2),size2) $ blocks
+    , Map.insert bid2 shape1 $ Map.insert bid1 shape2 $ blocks
     )
   canvasSize <- getCanvasSize
-  addCost $ 3 * canvasSize / fromIntegral (w1 * h1)
+  addCost $ 3 * canvasSize / fromIntegral (shapeSize shape1)
 evalMove move@(MERGE bid1 bid2) = do
   (cnt, blocks) <- get
-  ((x1,y1),size1@(w1,h1)) <- lookupBlock bid1
-  ((x2,y2),size2@(w2,h2)) <- lookupBlock bid2
+  shape1@(Rectangle (x1,y1) (x1',y1')) <- lookupBlock bid1
+  shape2@(Rectangle (x2,y2) (x2',y2')) <- lookupBlock bid2
   let blocks' = Map.delete bid1 $ Map.delete bid2 blocks
       cnt' = cnt + 1
       bid3 = [cnt']
-  if x1 == x2 && w1 == w2 && (y1 + h1 == y2 || y2 + h2 == y1) then do
-    put (cnt', Map.insert bid3 ((x1, min y1 y2), (w1, h1+h2)) blocks')
-  else if y1 == y2 && h1 == h2 && (x1 + w1 == x2 || x2 + w2 == x1) then do
-    put (cnt', Map.insert bid3 ((min x1 x2, y1), (w1+w2, h1)) blocks')
+  if x1 == x2 && shapeWidth shape1 == shapeWidth shape2 && (y1' == y2 || y2' == y1) then do
+    put (cnt', Map.insert bid3 (Rectangle (x1, min y1 y2) (x1', max y1' y2')) blocks')
+  else if y1 == y2 && shapeHeight shape1 == shapeHeight shape2 && (x1' == x2 || x2' == x1) then do
+    put (cnt', Map.insert bid3 (Rectangle (min x1 x2, y1) (max x1' x2', y1')) blocks')
   else do
     throwError ("invalid move (" ++ dispMove move ++ ")")
   canvasSize <- getCanvasSize
-  addCost $ 1 * canvasSize / fromIntegral (max (w1 * h1) (w2 * h2))
+  addCost $ 1 * canvasSize / fromIntegral (max (shapeSize shape1) (shapeSize shape2))
 
 
-lookupBlock :: Monad m => BlockId -> M m Rect
+lookupBlock :: Monad m => BlockId -> M m Shape
 lookupBlock bid = do
   (_, blocks) <- get
   case Map.lookup bid blocks of
