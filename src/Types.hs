@@ -39,6 +39,15 @@ data Shape
         }
     deriving (Eq, Show)
 
+shapeWidth :: Shape -> Int
+shapeWidth (Rectangle (x0, _y0) (x1, _y1)) = x1 - x0
+
+shapeHeight :: Shape -> Int
+shapeHeight (Rectangle (_x0, y0) (_x1, y1)) = y1 - y0
+
+shapeSize :: Shape -> Int
+shapeSize s = shapeWidth s * shapeHeight s
+
 sameShape :: Shape -> Shape -> Bool
 sameShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11))
     = x01 - x00 == x11 - x10 && y01 -y00 == y11 - y10
