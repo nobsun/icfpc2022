@@ -162,7 +162,7 @@ cost csz base shp
 
 size :: Shape -> Int
 size = \ case
-    Rectangle (x0, y0) (x1, y1) -> succ (x1 - x0) * succ (y1 - y0)
+    Rectangle (x0, y0) (x1, y1) -> (x1 - x0) * (y1 - y0)
 
 {- | roundUpOn5: 四捨五入
 >>> roundUpOn5 4.5
