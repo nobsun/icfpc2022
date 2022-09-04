@@ -54,7 +54,7 @@ intersectShape :: Shape -> Shape -> Maybe Shape
 intersectShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11)) = if
     | x00 >= x11 || x01 <= x10 -> Nothing
     | y00 >= y11 || y01 <= y10 -> Nothing
-    | otherwise -> Just $ Rectangle (max x00 x10, max y00 y10) (min x01 x11, min y01, y11) 
+    | otherwise -> Just $ Rectangle (max x00 x10, max y00 y10) (min x01 x11, min y01 y11) 
 
 type BlockId = V.Vector Int
 

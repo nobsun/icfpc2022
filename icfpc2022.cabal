@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 41aacebb596e31f174dee11091c9cf359f8f383f0879dcaa7f8d637cd1acf140
+-- hash: 0abe2b5b4d844065269ef963131b3c1e61bb7a7e286c52a6efdb451433e96e79
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      ApiJSON
       Block
       Content
       EvalContent
