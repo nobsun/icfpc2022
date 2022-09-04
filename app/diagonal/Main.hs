@@ -32,11 +32,14 @@ diagonalS threshold img bid =
     ) bid (concat[[(j,i-j)| j<-[0..i], 0<=i,i<=399,0<=j,j<=399]|i<-[0..2*399]])
   where
     paint :: [Int] -> (Int,Int) -> PixelRGBA8 -> BState [Int]
-    paint bid' (x,y) (PixelRGBA8 r g b a) | x==0 || y==0 || x==399 || y==399 = do
+    paint bid' (0,0) (PixelRGBA8 r g b a) = do
+      programLineS(Move (ColorMove (BlockId bid')(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral a))))
+      return bid'
+    paint bid' (x,y) (PixelRGBA8 r g b a) | x==0 || y==0 = do
       if x == 0 then
-        programLineS(Move (LCutMove (BlockId bid') Vertical (LineNumber y)))
+        programLineS(Move (LCutMove (BlockId bid') Horizontal (LineNumber y)))
       else
-        programLineS(Move (LCutMove (BlockId bid') Horizontal (LineNumber x)))
+        programLineS(Move (LCutMove (BlockId bid') Vertical (LineNumber x)))
       programLineS(Move (ColorMove (BlockId (1:bid'))(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral a))))
       programLineS(Move (MergeMove (BlockId (0:bid'))(BlockId (1:bid'))))
       B{bCounter=b} <- get
