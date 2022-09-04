@@ -11,6 +11,7 @@ import Data.Aeson.TH
 import Data.Char
 import qualified Data.Map as Map
 import Data.List
+import qualified Data.Vector as V
 -- import qualified Data.Set as Set
 import qualified Graphics.Gloss as Gloss
 import qualified Graphics.Gloss.Data.Bitmap as Gloss
@@ -65,14 +66,13 @@ compatibleShape _ _ = False
 
 type Id = Int
 
--- Note that numbers are reversed
-type BlockId = [Int]
+type BlockId = V.Vector Int
 
 instance {-# Overlapping #-} Read BlockId where
     readsPrec _ = readP_to_S rBlockId
 
 rBlockId :: ReadP BlockId
-rBlockId = rBracket (reverse <$> sepBy1 rInt (char '.'))
+rBlockId = rBracket (V.fromList <$> sepBy1 rInt (char '.'))
 
 rInt :: ReadP Int
 rInt = read <$> many1 (satisfy isDigit)
@@ -165,7 +165,7 @@ dispMove = \case
                                           ]
 
 dispBlockId :: BlockId -> String
-dispBlockId = dispBetween "[" "]" . intercalate "." . map show . reverse
+dispBlockId = dispBetween "[" "]" . intercalate "." . map show . V.toList
 
 dispBetween :: String -> String -> String -> String
 dispBetween o c s = o ++ s ++ c
@@ -217,7 +217,7 @@ initializeWorld cvs is
     { canvas = cvs
     , prog = is
     , counter = 0
-    , blocks = Map.singleton [0] 
+    , blocks = Map.singleton (V.singleton 0)
                  (SimpleBlock (Rectangle (0,0) (400, 400)) white)
     , pict   = undefined
     , costs  = 0
