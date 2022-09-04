@@ -1,9 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module ApiJSON (
-  Submission (..),
-  parseSubmissions,
-  loadSubmissions,
+  Submission (..), parseSubmissions, loadSubmissions,
+  Problem (..), parseProblems, loadProblems,
   ) where
 
 import GHC.Generics (Generic)
@@ -47,6 +46,36 @@ parseSubmissions = (submissions <$>) . JSON.eitherDecodeStrict'
 -- | load from file which content is output of api/list-submissions.sh
 loadSubmissions :: FilePath -> IO (Either String [Submission])
 loadSubmissions = (parseSubmissions <$>) . BS.readFile
+
+
+newtype Problems =
+  Problems
+  { problems :: [Problem] }
+  deriving (Show, Generic)
+
+instance FromJSON Problems
+
+data Problem =
+  Problem
+  { prob_id :: Int
+  , prob_name :: String
+  , prob_description :: String
+  , prob_canvas_link :: String
+  , prob_initial_config_link :: String
+  , prob_target_link :: String
+  }
+  deriving (Show, Generic)
+
+instance FromJSON Problem where
+  parseJSON = genericParseJSON $ stripPrefixOptions "prob_"
+
+-- | parse output of api/list-problems.sh
+parseProblems :: ByteString -> Either String [Problem]
+parseProblems = (problems <$>) . JSON.eitherDecodeStrict'
+
+-- | load from file which content is output of api/list-problems.sh
+loadProblems :: FilePath -> IO (Either String [Problem])
+loadProblems = (parseProblems <$>) . BS.readFile
 
 ---
 
