@@ -130,8 +130,8 @@ evalMoveM move@(SWAP bid1 bid2) = do
   (cnt, blocks) <- get
   shape1@(Rectangle (x1,y1) _) <- lookupBlock bid1
   shape2@(Rectangle (x2,y2) _) <- lookupBlock bid2
-  unless (shapeSize shape1 == shapeSize shape2) $
-    throwError ("invalid move (" ++ dispMove move ++ "): " ++ show (shapeSize shape1) ++ " /= " ++ show (shapeSize shape2))
+  unless ((shapeWidth shape1, shapeHeight shape1) == (shapeWidth shape2, shapeHeight shape2)) $
+    throwError ("invalid move (" ++ dispMove move ++ "): " ++ show (shapeWidth shape1, shapeHeight shape1) ++ " /= " ++ show (shapeWidth shape2, shapeHeight shape2))
   img <- ask
   forM_ [0 .. shapeHeight shape1 - 1] $ \i -> do
     forM_ [0 .. shapeWidth shape1 - 1] $ \j -> do
