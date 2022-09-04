@@ -2,9 +2,10 @@ module Main where
 
 import Codec.Picture
 import Codec.Picture.Types
-import Data.List
+import Data.List (transpose)
 import System.Environment
 
+import Control.Monad.Primitive (RealWorld)
 import Control.Monad (forM_,when)
 import Control.Monad.State.Lazy
 import Data.Foldable (foldlM)
@@ -20,33 +21,63 @@ distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
   where
     f = fromIntegral
 
+distanceI xs ys =
+  sum $ zipWith f xs ys
+  where
+    f x y = ((fromIntegral x)-(fromIntegral y))^2
+
+
+pixelBoxAt :: (Int,Int) -> Int -> Image PixelRGBA8 -> [[Int]]
+pixelBoxAt (x,y) size img =
+  transpose $ map h [pixelAt img i j| i<-[x..x+size-1], j<-[(399-y),(399-y-1),(399-(y+size-1))]]
+  where
+    h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
+
+readPixelBox :: (Int,Int) -> Int ->  MutableImage RealWorld PixelRGBA8 -> BState [[Int]]
+readPixelBox (x,y) size bimg =
+  fmap (transpose.map h) $ sequence[readPixel bimg i j| i<-[x..x+size-1], j<-[y..y+size-1]]
+  where
+    h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
+
+  
+leastSquare :: [Int] -> Int
+leastSquare xs =
+  if 0 <= center && center <= 255 then center
+   else if 255^2 -b*255 > 0 then 0
+        else 255
+  where
+    center = round $ -b/(2*a)
+    a = fromIntegral $ length xs
+    b = fromIntegral $ -2*(sum xs)
+
+
 ------------------------------------------------
 
-diagonalS :: Int -> Image PixelRGBA8 -> [Int] -> BState [Int]
-diagonalS threshold img bid =
+diagonalS :: Int -> Int -> Image PixelRGBA8 -> [Int] -> BState [Int]
+diagonalS size threshold img bid =
   foldlM (\bid' (x,y) -> do
       B{bImage=bimg} <- get
-      let color1 = pixelAt img x (399-y)
-      color2 <- readPixel bimg x y
-      if distance color1 color2 > threshold then paint bid' (x,y) color1 else return bid'
-    ) bid (concat[[(j,i-j)| j<-[0..i], 0<=i,i<=399,0<=j,j<=399]|i<-[0..2*399]])
+      let color1 = map leastSquare $　pixelBoxAt (x,y) size img
+      color2 <- fmap (map leastSquare) $ readPixelBox (x,y) size bimg
+      if distanceI color1 color2 > threshold then paint bid' (x,y) color1 else return bid'
+    ) bid (concat[[(j,i-j)| j<-[0,size..i], 0<=i,i<=399,0<=j,j<=399]|i<-[0,size..2*399-size]])
   where
-    paint :: [Int] -> (Int,Int) -> PixelRGBA8 -> BState [Int]
-    paint bid' (0,0) (PixelRGBA8 r g b a) = do
-      programLineS(Move (ColorMove (BlockId bid')(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral a))))
+    paint :: [Int] -> (Int,Int) -> [Int] -> BState [Int]
+    paint bid' (0,0) [r,g,b] = do
+      programLineS(Move (ColorMove (BlockId bid')(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral 255))))
       return bid'
-    paint bid' (x,y) (PixelRGBA8 r g b a) | x==0 || y==0 = do
+    paint bid' (x,y) [r,g,b] | x==0 || y==0 = do
       if x == 0 then
         programLineS(Move (LCutMove (BlockId bid') Horizontal (LineNumber y)))
       else
         programLineS(Move (LCutMove (BlockId bid') Vertical (LineNumber x)))
-      programLineS(Move (ColorMove (BlockId (1:bid'))(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral a))))
+      programLineS(Move (ColorMove (BlockId (1:bid'))(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral 255))))
       programLineS(Move (MergeMove (BlockId (0:bid'))(BlockId (1:bid'))))
       B{bCounter=b} <- get
       return [b-1]
-    paint bid' (x,y) (PixelRGBA8 r g b a) | otherwise = do
+    paint bid' (x,y) [r,g,b] | otherwise = do
       programLineS(Move (PCutMove (BlockId bid')(Point x y)))
-      programLineS(Move (ColorMove (BlockId (2:bid'))(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral a))))
+      programLineS(Move (ColorMove (BlockId (2:bid'))(Color(fromIntegral r)(fromIntegral g)(fromIntegral b)(fromIntegral 255))))
       let bs = case (x<200,x<y) of
                 (True,True) -> [(1,0),(2,3)]
                 (True,False)-> [(3,0),(2,1)]
@@ -62,10 +93,10 @@ diagonalS threshold img bid =
 
 main :: IO ()
 main = do
-  [threshold,fname] <- getArgs
+  [size,threshold,fname] <- getArgs
   Right dynImg <- readImage fname
   case dynImg of
     ImageRGBA8 img -> do
-      s <- execStateT (initS >> diagonalS (read threshold) img [0]) initialBlock
+      s <- execStateT (initS >> diagonalS (read size) (read threshold) img [0]) initialBlock
       mapM_ print $ reverse $ bHistory s
       freezeImage (bImage s) >>= writePng (fname++".diagonal.png")
