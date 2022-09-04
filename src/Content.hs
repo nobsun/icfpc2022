@@ -2,6 +2,7 @@ module Content
   ( Content (..)
   , contentWidth
   , contentHeight
+  , contentSize
   , hmerge
   , vmerge
   , hsplit
@@ -32,6 +33,9 @@ contentHeight :: Content -> Int
 contentHeight (Fill _ h _) = h
 contentHeight (HMerge _ l _r) = contentHeight l
 contentHeight (VMerge h _ _) = h
+
+contentSize :: Content -> Int
+contentSize c = contentWidth c * contentHeight c
 
 hmerge :: Content -> Content -> Content
 hmerge l r
