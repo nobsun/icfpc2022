@@ -189,7 +189,7 @@ sample
 
 {- | local load
 >>> localLoad sample
-[cut [0] [X] [200],color [0.1] [255,0,0,255],merge [0.0] [0.1],cut [1] [Y] [100],cut [1.0] [Y] [100],color [1.0.1] [0,255,0,255]]
+[cut [0] [X] [200],color [0.1] [255,0,0,255],merge [0.0] [0.1],cut [1] [Y] [200],cut [1.0] [Y] [100],color [1.0.1] [0,255,0,255]]
 -}
 localLoad :: String -> [Move]
 localLoad src = [ read (filter (' '/=) l) | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 
