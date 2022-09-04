@@ -5,7 +5,7 @@ import Codec.Picture.Types
 import Data.List (transpose)
 import System.Environment
 
-import Control.Monad.Primitive (RealWorld)
+--import Control.Monad.Primitive (RealWorld)
 import Control.Monad (forM_,when)
 import Control.Monad.State.Lazy
 import Data.Foldable (foldlM)
@@ -33,7 +33,7 @@ pixelBoxAt (x,y) size img =
   where
     h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
 
-readPixelBox :: (Int,Int) -> Int ->  MutableImage RealWorld PixelRGBA8 -> BState [[Int]]
+--readPixelBox :: (Int,Int) -> Int ->  MutableImage RealWorld PixelRGBA8 -> BState [[Int]]
 readPixelBox (x,y) size bimg =
   fmap (transpose.map h) $ sequence[readPixel bimg i j| i<-[x..x+size-1], j<-[y..y+size-1]]
   where
