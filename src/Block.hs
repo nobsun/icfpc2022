@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 module Block where
 
@@ -32,6 +33,14 @@ type ChildBlocks  = [Block]
 
 type BlockTable = Map.Map BlockId Block
 
+dispBlockEntry :: Map.Map BlockId Block -> (BlockId, Block) -> String
+dispBlockEntry tbl (bid, b) = dispBlockId bid ++ ": " ++ dispBlock b
+
+dispBlock :: Block -> String
+dispBlock = \ case
+    SimpleBlock  shp col -> show shp ++ " " ++ dispColor col ++ " size: " ++ show (shapeSize shp)
+    ComplexBlock shp bs  -> show shp ++ " [" ++ intercalate ", " (map dispBlock bs) ++ "]"
+
 data World
     = World
     { canvas      :: Shape
@@ -39,7 +48,7 @@ data World
     , counter     :: Int
     , blocks      :: BlockTable
     , pict        :: Gloss.Picture
-    , costs       :: Int
+    , costs       :: !Int
     }
 
 instance Show World where
@@ -62,7 +71,6 @@ initializeWorld cvs is
 initialWorld :: World
 initialWorld = initializeWorld (Rectangle (0,0) (400,400)) []
 
-
 white :: Color
 white = (255,255,255,255)
 red, green, blue :: Color
@@ -77,10 +85,3 @@ incCount world = (cnt, world { counter = succ cnt })
 
 type Instruction = World -> World
 
-dispBlockEntry :: Map.Map BlockId Block -> (BlockId, Block) -> String
-dispBlockEntry tbl (bid, b) = dispBlockId bid ++ ": " ++ dispBlock b
-
-dispBlock :: Block -> String
-dispBlock = \ case
-    SimpleBlock  shp col -> show shp ++ " " ++ dispColor col
-    ComplexBlock shp bs  -> show shp ++ " [" ++ intercalate ", " (map dispBlock bs) ++ "]"

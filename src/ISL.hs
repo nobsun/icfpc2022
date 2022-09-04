@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
@@ -10,6 +11,8 @@ import qualified Data.Vector.Generic as V
 import Types
 import Block
 import Text.ParserCombinators.ReadP
+
+import Debug.Trace
 
 fetch :: World -> (Instruction, World)
 fetch world = ( head (prog world)
@@ -26,12 +29,12 @@ interp mv world = case mv of
 
 {- | lcut : Line Cut Move instruction 
 >>> lcut (V.fromList [0] :: BlockId) X 100 initialWorld
-[0.0]: Rectangle {leftBottom = (0,0), rightUpper = (100,400)} [255,255,255,255]
-[0.1]: Rectangle {leftBottom = (100,0), rightUpper = (400,400)} [255,255,255,255]
+[0.0]: Rectangle {leftBottom = (0,0), rightUpper = (100,400)} [255,255,255,255] size: 40000
+[0.1]: Rectangle {leftBottom = (100,0), rightUpper = (400,400)} [255,255,255,255] size: 120000
 <BLANKLINE>
 >>> lcut (V.fromList [0] :: BlockId) Y 100 initialWorld
-[0.0]: Rectangle {leftBottom = (0,0), rightUpper = (400,100)} [255,255,255,255]
-[0.1]: Rectangle {leftBottom = (0,100), rightUpper = (400,400)} [255,255,255,255]
+[0.0]: Rectangle {leftBottom = (0,0), rightUpper = (400,100)} [255,255,255,255] size: 40000
+[0.1]: Rectangle {leftBottom = (0,100), rightUpper = (400,400)} [255,255,255,255] size: 120000
 <BLANKLINE>
 -}
 lcut :: BlockId -> Orientation -> Offset -> Instruction
@@ -42,8 +45,8 @@ lcut bid o off world = case world of
             b1@(bid1, block1) = (V.snoc bid 1, sub1)
             (sub0, sub1) = case block of
                 SimpleBlock _ col -> (SimpleBlock shp0 col, SimpleBlock shp1 col)
-                _ -> ( fromMaybe (error "lcut: ?")  (shapingBlock shp0 block)
-                     , fromMaybe (error $ "lcut: " ++ msg) (shapingBlock shp1 block)
+                _ -> ( fromMaybe (error "lcut: 0?") (shapingBlock shp0 block)
+                     , fromMaybe (error "lcut: 1?") (shapingBlock shp1 block)
                      )
                 where
                     msg = show (shape block) ++ " " ++ show shp1
@@ -51,8 +54,8 @@ lcut bid o off world = case world of
             (x0,y0) = leftBottom (shape block)
             (x1,y1) = rightUpper (shape block)
             (x00,y00,x01,y01,x10,y10,x11,y11) = case o of
-                X -> (x0,y0,x0+off,y1,x0+off,y0,x1,y1)
-                Y -> (x0,y0,x1,y0+off,x0,y0+off,x1,y1)
+                X -> (x0,y0,off,y1,off,y0,x1,y1)
+                Y -> (x0,y0,x1,off,x0,off,x1,y1)
             shp0 = Rectangle { leftBottom = (x00,y00)
                              , rightUpper = (x01,y01)
                              }
@@ -71,17 +74,17 @@ lcut bid o off world = case world of
 >>> world0 = initialWorld
 >>> world1 = world0 { blocks = tbl }
 >>> world1
-[1]: Rectangle {leftBottom = (0,0), rightUpper = (40,50)} [0,255,0,255]
-[2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255]
-[3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255]
+[1]: Rectangle {leftBottom = (0,0), rightUpper = (40,50)} [0,255,0,255] size: 2000
+[2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255] size: 14000
+[3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255] size: 144000
 <BLANKLINE>
 >>> pcut (V.fromList [1] :: BlockId) (30, 30) world1
-[1.0]: Rectangle {leftBottom = (0,0), rightUpper = (30,30)} [0,255,0,255]
-[1.1]: Rectangle {leftBottom = (30,0), rightUpper = (40,30)} [0,255,0,255]
-[1.2]: Rectangle {leftBottom = (30,30), rightUpper = (40,50)} [0,255,0,255]
-[1.3]: Rectangle {leftBottom = (0,30), rightUpper = (30,50)} [0,255,0,255]
-[2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255]
-[3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255]
+[1.0]: Rectangle {leftBottom = (0,0), rightUpper = (30,30)} [0,255,0,255] size: 900
+[1.1]: Rectangle {leftBottom = (30,0), rightUpper = (40,30)} [0,255,0,255] size: 300
+[1.2]: Rectangle {leftBottom = (30,30), rightUpper = (40,50)} [0,255,0,255] size: 200
+[1.3]: Rectangle {leftBottom = (0,30), rightUpper = (30,50)} [0,255,0,255] size: 600
+[2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255] size: 14000
+[3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255] size: 144000
 <BLANKLINE>
 -}
 pcut :: BlockId -> Point -> Instruction
@@ -94,7 +97,11 @@ pcut bid (mx,my) world = case world of
             b3@(bid3, block3) = (V.snoc bid 3, sub3)
             (sub0,sub1,sub2,sub3) = case block of
                 SimpleBlock _ col -> (SimpleBlock shp0 col, SimpleBlock shp1 col, SimpleBlock shp2 col, SimpleBlock shp3 col)
-                ComplexBlock _ ss -> (ComplexBlock shp0 ss, ComplexBlock shp1 ss, ComplexBlock shp2 ss, ComplexBlock shp3 ss)
+                _ -> ( fromMaybe (error "pcut: 0?") (shapingBlock shp0 block)
+                     , fromMaybe (error "pcut: 1?") (shapingBlock shp1 block)
+                     , fromMaybe (error "pcut: 2?") (shapingBlock shp2 block)
+                     , fromMaybe (error "pcut: 3?") (shapingBlock shp3 block)
+                     )
             block = tbl0 Map.! bid
             (x0,y0) = leftBottom (shape block)
             (x1,y1) = rightUpper (shape block)
@@ -109,9 +116,11 @@ pcut bid (mx,my) world = case world of
 colormove :: BlockId -> Color -> Instruction
 colormove bid col world = case world of
     World { canvas = cnvs, blocks = tbl0, costs = tc } 
-        -> world { blocks = setColor col bid (blocks world), costs = tc + c}
+        -> world { blocks = setColor col bid (blocks world), costs = {- trace msg -} tc + c}
             where
-                c = cost (size cnvs) 5 (shape (tbl0 Map.! bid))
+                c = cost (size cnvs) 5 shp
+                shp = shape (tbl0 Map.! bid)
+                msg = "-------> " ++ dispBlockId bid ++ " " ++ show shp ++ " size: " ++ show (size shp)
 
 setColor :: Color -> BlockId -> Map.Map BlockId Block -> Map.Map BlockId Block
 setColor c bid tbl = Map.update (const $ Just $ setColor' c (tbl Map.! bid)) bid tbl
@@ -156,8 +165,8 @@ mergemove bid0 bid1 world = case world of
             c  = max c0 c1
 
 cost :: Int -> Int -> Shape -> Int
-cost csz base shp
-    = roundUpOn5 $ fromIntegral base * fromIntegral csz / fromIntegral (size shp)
+cost canvasSize baseCost shape
+    = roundUpOn5 $ fromIntegral baseCost * fromIntegral canvasSize / fromIntegral (size shape)
 
 size :: Shape -> Int
 size = \ case
@@ -204,7 +213,6 @@ localEvalTrace world = world : rests
 next :: World -> World
 next = uncurry ($) . fetch
 
-
 isFinal :: World -> Bool
 isFinal = \ case
     World { prog = is } -> null is
@@ -213,4 +221,4 @@ initCanvas :: Canvas
 initCanvas = Rectangle (0,0) (400,400)
 
 world0 :: World
-world0 = initializeWorld initCanvas (map interp (localLoad sample))
+world0 = initializeWorld initCanvas (map interp sampleMoves)
