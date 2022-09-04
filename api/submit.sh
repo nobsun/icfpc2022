@@ -27,4 +27,4 @@ fi
 file="$1"
 shift
 
-api_request_nl -X POST -F file=@"${file}" ${api_prefix}api/submissions/${prob_id}/create
+api_request_nl -X POST -F file=@"${file}" ${api_prefix}api/problems/${prob_id}
