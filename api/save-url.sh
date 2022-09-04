@@ -30,6 +30,11 @@ if [ -r "$output" ]; then
     exit 0
 fi
 
+outdir=$(dirname ${output})
+if [ ! -d $outdir ]; then
+    mkdir -p $outdir
+fi
+
 set -x
 
 curl -o "${output}.download" "$url"
