@@ -177,4 +177,4 @@ sample
     ]
 
 load :: String -> [Move]
-load src = [ read l | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 
+load src = [ read (filter (' '/=) l) | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 
