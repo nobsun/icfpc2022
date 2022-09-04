@@ -15,26 +15,10 @@ import Data.Char
 import qualified Data.Map as Map
 import Data.List
 import qualified Data.Vector as V
--- import qualified Data.Set as Set
-import qualified Graphics.Gloss as Gloss
-import qualified Graphics.Gloss.Data.Bitmap as Gloss
-import Numeric
 import Text.ParserCombinators.ReadP
-
-type BitmapData = Gloss.BitmapData
-type Canvas = Shape
 
 type Color = RGBA
 type RGBA = (Int, Int, Int, Int)
-
--- type Block        = Either SimpleBlock ComplexBlock
-
-data Block
-    = SimpleBlock { shape :: Shape, blockColor :: Color }
-    | ComplexBlock { shape :: Shape, children :: ChildBlocks }
-    deriving (Eq, Show)
-
-type ChildBlocks  = [BlockId]
 
 data Shape
     = Rectangle
@@ -64,10 +48,7 @@ compatibleShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y1
                    , [ x01 == x10, y00 == y10, y01 == y11 ]
                    , [ x00 == x11, y00 == y10, y01 == y11 ]
                    ]
-
 compatibleShape _ _ = False
-
-type Id = Int
 
 type BlockId = V.Vector Int
 
@@ -135,20 +116,6 @@ rSwapMove = SWAP <$> (string "swap" *> skipSpaces *> rBlockId) <*> rBlockId
 rMergeMove :: ReadP Move
 rMergeMove = MERGE <$> (string "merge" *> skipSpaces *> rBlockId) <*> rBlockId
 
--- ProgLine
-
-data ProgLine
-    = Move Move
-    | Newline
-    | Comment String
-    deriving (Eq, Show)
-
-displayProgLine :: ProgLine -> String
-displayProgLine = \ case
-    Newline     -> "\n"
-    Comment msg -> "# " ++ msg
-    Move mv     -> dispMove mv
-
 dispMove :: Move -> String
 dispMove = \case
     LCUT bid ori off   -> intercalate " " [ "cut"
@@ -190,70 +157,11 @@ dispColor :: Color -> String
 dispColor (r,g,b,a) = dispBetween "[" "]"
                       (intercalate "," (map show [r,g,b,a]))
 
-dispBlockEntry :: Map.Map BlockId Block -> (BlockId, Block) -> String
-dispBlockEntry tbl (bid, b) = dispBlockId bid ++ ": " ++ dispBlock tbl b
-
-dispBlock :: Map.Map BlockId Block -> Block -> String
-dispBlock tbl = \ case
-    SimpleBlock  shp col -> show shp ++ " " ++ dispColor col
-    ComplexBlock shp bs  -> show shp ++ " [" ++ intercalate ", " (map (dispBlock tbl . (tbl Map.!)) bs) ++ "]"
-
--- World
-
-type BlockTable = Map.Map BlockId Block
-
-data World
-    = World
-    { canvas      :: Shape
-    , prog        :: [Instruction]
-    , counter     :: Int
-    , blocks      :: BlockTable
-    , pict        :: Gloss.Picture
-    , costs       :: Int
-    }
-
-instance Show World where
-    show w = case w of
-        World { blocks = tbl }
-            -> unlines (map (dispBlockEntry tbl) (Map.assocs tbl))
-
-initializeWorld :: Canvas -> [Instruction] -> World
-initializeWorld cvs is
-    = World
-    { canvas = cvs
-    , prog = is
-    , counter = 0
-    , blocks = Map.singleton (V.singleton 0)
-                 (SimpleBlock (Rectangle (0,0) (400, 400)) white)
-    , pict   = undefined
-    , costs  = 0
-    }
-
-initialWorld :: World
-initialWorld = initializeWorld (Rectangle (0,0) (399,399)) []
-
-
-white :: Color
-white = (255,255,255,255)
-red, green, blue :: Color
-red  = (255,0,0,255)
-green = (0,255,0,255)
-blue  = (0,0,255,255)
-
-incCount :: World -> (Int, World)
-incCount world = (cnt, world { counter = succ cnt })
-    where
-        cnt = counter world
-
-type Instruction = World -> World
-
-
 
 loadISL :: FilePath -> IO [Move]
 loadISL fname = do
   s <- readFile fname
   return [read l | l <- lines s, not ("#" `isPrefixOf` l)]
-
 
 
 data InitialConfig

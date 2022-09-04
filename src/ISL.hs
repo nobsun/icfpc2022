@@ -8,6 +8,7 @@ import Data.List
 import Data.Maybe
 import qualified Data.Vector.Generic as V
 import Types
+import Block
 import Text.ParserCombinators.ReadP
 
 fetch :: World -> (Instruction, World)
@@ -15,11 +16,8 @@ fetch world = ( head (prog world)
               , world { prog = tail (prog world)}
               )
 
-interp :: ProgLine -> Instruction
-interp pl world = case pl of
-    Newline     -> world
-    Comment msg -> world
-    Move mv -> case mv of
+interp :: Move -> Instruction
+interp mv world = case mv of
         LCUT bid o off -> lcut bid o off world
         PCUT bid point -> pcut bid point world
         COLOR bid col  -> colormove bid col world
@@ -108,9 +106,12 @@ colormove bid col world = case world of
                 c = cost (size cnvs) 5 (shape (tbl0 Map.! bid))
 
 setColor :: Color -> BlockId -> Map.Map BlockId Block -> Map.Map BlockId Block
-setColor c bid tbl = case tbl Map.! bid of
-    SimpleBlock shp _   -> Map.update (const $ Just $ SimpleBlock shp c) bid tbl
-    ComplexBlock shp bs -> foldr (setColor c) tbl bs
+setColor c bid tbl = Map.update (const $ Just $ setColor' c (tbl Map.! bid)) bid tbl
+
+setColor' :: Color -> Block -> Block
+setColor' c = \ case
+    SimpleBlock shp _   -> SimpleBlock shp c
+    ComplexBlock shp bs -> ComplexBlock shp (map (setColor' c) bs)
 
 swapmove :: BlockId -> BlockId -> Instruction
 swapmove bid0 bid1 world = case world of
@@ -140,7 +141,7 @@ mergemove bid0 bid1 world = case world of
                 | x00 == x10 -> Rectangle (x00, min y00 y10) (x01, max y01 y11)
                 | y00 == y10 -> Rectangle (min x00 x10, y00) (max x01 x11, y01)
                 | otherwise  -> error "mergemove: not compatible shapes"
-            tbl1 = Map.insert (V.singleton cnt) (ComplexBlock newshp [bid0, bid1]) tbl0
+            tbl1 = Map.insert (V.singleton cnt) (ComplexBlock newshp [block0, block1]) tbl0
             c0 = cost (size cnvs) 1 shp0
             c1 = cost (size cnvs) 1 shp1
             c  = max c0 c1
