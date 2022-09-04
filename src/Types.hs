@@ -26,7 +26,7 @@ type RGBA = (Int, Int, Int, Int)
 
 -- type Block        = Either SimpleBlock ComplexBlock
 
-data Block 
+data Block
     = SimpleBlock { shape :: Shape, blockColor :: Color }
     | ComplexBlock { shape :: Shape, children :: ChildBlocks }
     deriving (Eq, Show)
@@ -61,7 +61,7 @@ compatibleShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y1
                    , [ x01 == x10, y00 == y10, y01 == y11 ]
                    , [ x00 == x11, y00 == y10, y01 == y11 ]
                    ]
-               
+
 compatibleShape _ _ = False
 
 type Id = Int
@@ -88,12 +88,12 @@ rOrientation = rBracket $ ((char 'X' +++ char 'x') *> pure X) +++ ((char 'Y' +++
 type Offset = Int
 type Point = (Int, Int)
 
-data Move 
+data Move
     = LCUT  BlockId Orientation Offset
     | PCUT  BlockId Point
     | COLOR BlockId Color
-    | SWAP  BlockId BlockId 
-    | MERGE BlockId BlockId 
+    | SWAP  BlockId BlockId
+    | MERGE BlockId BlockId
     deriving Eq
 
 instance Show Move where
@@ -174,7 +174,7 @@ dispBetween :: String -> String -> String -> String
 dispBetween o c s = o ++ s ++ c
 
 dispOrientation :: Orientation -> String
-dispOrientation = dispBetween "[" "]" . show 
+dispOrientation = dispBetween "[" "]" . show
 
 dispOffset :: Offset -> String
 dispOffset = dispBetween "[" "]" . show
@@ -199,12 +199,12 @@ dispBlock tbl = \ case
 
 type BlockTable = Map.Map BlockId Block
 
-data World 
+data World
     = World
     { canvas      :: Shape
     , prog        :: [Instruction]
     , counter     :: Int
-    , blocks      :: BlockTable 
+    , blocks      :: BlockTable
     , pict        :: Gloss.Picture
     , costs       :: Int
     }
