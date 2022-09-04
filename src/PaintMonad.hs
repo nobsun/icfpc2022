@@ -112,8 +112,8 @@ fillRect bid rect c =
 
 
 sample_prob_2 = do
-  -- mapM_ print moves
-  writeFile "human_2.isl" (unlines (map show moves))
+  mapM_ print moves
+  -- writeFile "human_2.isl" (unlines (map show moves))
 
   where
     (moves, cnt) = genMoves (Rectangle (0,0) (400,400)) 0 $ do
