@@ -25,7 +25,6 @@ distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
 layerS :: Int -> Image PixelRGBA8 -> [Int] -> Int -> BState ()
 layerS threshold img bid 0 = return ()
 layerS threshold img bid y = do
-  traceShow (bid,y) (return ())
   B{bBlocks=bBlocks,bImage=bimg} <- get
   let ((bx,by),(tx,ty)) = bBlocks Map.! bid
   bid' <- foldlM (\bid' x -> do

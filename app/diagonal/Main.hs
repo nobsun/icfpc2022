@@ -25,7 +25,6 @@ distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
 diagonalS :: Int -> Image PixelRGBA8 -> [Int] -> BState [Int]
 diagonalS threshold img bid =
   foldlM (\bid' (x,y) -> do
-      traceShow (x,y) $ return ()
       B{bImage=bimg} <- get
       let color1 = pixelAt img x (399-y)
       color2 <- readPixel bimg x y
