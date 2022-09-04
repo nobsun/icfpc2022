@@ -20,7 +20,6 @@ newtype Submissions =
   deriving (Show, Generic)
 
 instance FromJSON Submissions
--- instance ToJSON Submissions where
 
 data Submission =
   Submission
@@ -35,9 +34,6 @@ data Submission =
 
 instance FromJSON Submission where
   parseJSON = genericParseJSON $ stripPrefixOptions "sub_"
-
--- instance ToJSON Submission where
---   toJSON = genericToJSON $ stripPrefixOptions "sub_"
 
 -- | parse output of api/list-submissions.sh
 parseSubmissions :: ByteString -> Either String [Submission]
