@@ -18,11 +18,11 @@ fetch world = ( head (prog world)
 
 interp :: Move -> Instruction
 interp mv world = case mv of
-        LCUT bid o off -> lcut bid o off world
-        PCUT bid point -> pcut bid point world
-        COLOR bid col  -> colormove bid col world
-        SWAP bid1 bid2 -> swapmove bid1 bid2 world
-        MERGE bid1 bid2 -> mergemove bid1 bid2 world
+    LCUT bid o off -> lcut bid o off world
+    PCUT bid point -> pcut bid point world
+    COLOR bid col  -> colormove bid col world
+    SWAP bid1 bid2 -> swapmove bid1 bid2 world
+    MERGE bid1 bid2 -> mergemove bid1 bid2 world
 
 {- | lcut : Line Cut Move instruction 
 >>> lcut (V.fromList [0] :: BlockId) X 100 initialWorld
@@ -38,10 +38,16 @@ lcut :: BlockId -> Orientation -> Offset -> Instruction
 lcut bid o off world = case world of
     World { canvas = cnvs, blocks  = tbl0, costs = tc } -> world { blocks = tbl3, costs = tc + c }
         where
-            b0@(bid0, block0) = (V.snoc bid 0, SimpleBlock shp0 col)
-            b1@(bid1, block1) = (V.snoc bid 1, SimpleBlock shp1 col)
+            b0@(bid0, block0) = (V.snoc bid 0, sub0)
+            b1@(bid1, block1) = (V.snoc bid 1, sub1)
+            (sub0, sub1) = case block of
+                SimpleBlock _ col -> (SimpleBlock shp0 col, SimpleBlock shp1 col)
+                _ -> ( fromMaybe (error "lcut: ?")  (shapingBlock shp0 block)
+                     , fromMaybe (error $ "lcut: " ++ msg) (shapingBlock shp1 block)
+                     )
+                where
+                    msg = show (shape block) ++ " " ++ show shp1
             block = tbl0 Map.! bid
-            col = blockColor block
             (x0,y0) = leftBottom (shape block)
             (x1,y1) = rightUpper (shape block)
             (x00,y00,x01,y01,x10,y10,x11,y11) = case o of
@@ -82,12 +88,14 @@ pcut :: BlockId -> Point -> Instruction
 pcut bid (mx,my) world = case world of
     World { canvas = cnvs, blocks = tbl0, costs = tc } -> world { blocks = tbl2, costs = tc + c }
         where
-            b0@(bid0, block0) = (V.snoc bid 0, SimpleBlock shp0 col)
-            b1@(bid1, block1) = (V.snoc bid 1, SimpleBlock shp1 col)
-            b2@(bid2, block2) = (V.snoc bid 2, SimpleBlock shp2 col)
-            b3@(bid3, block3) = (V.snoc bid 3, SimpleBlock shp3 col)
+            b0@(bid0, block0) = (V.snoc bid 0, sub0)
+            b1@(bid1, block1) = (V.snoc bid 1, sub1)
+            b2@(bid2, block2) = (V.snoc bid 2, sub2)
+            b3@(bid3, block3) = (V.snoc bid 3, sub3)
+            (sub0,sub1,sub2,sub3) = case block of
+                SimpleBlock _ col -> (SimpleBlock shp0 col, SimpleBlock shp1 col, SimpleBlock shp2 col, SimpleBlock shp3 col)
+                ComplexBlock _ ss -> (ComplexBlock shp0 ss, ComplexBlock shp1 ss, ComplexBlock shp2 ss, ComplexBlock shp3 ss)
             block = tbl0 Map.! bid
-            col = blockColor block 
             (x0,y0) = leftBottom (shape block)
             (x1,y1) = rightUpper (shape block)
             shp0 = Rectangle (x0,y0) (mx,my)
@@ -130,7 +138,7 @@ swapmove bid0 bid1 world = case world of
 mergemove :: BlockId -> BlockId -> Instruction
 mergemove bid0 bid1 world = case world of
     World { canvas = cnvs, counter = cnt, blocks = tbl0, costs = tc }
-        | compatibleShape shp0 shp1 -> world { counter = succ cnt, blocks = tbl1, costs = tc + c}
+        | compatibleShape shp0 shp1 -> world { counter = succ cnt, blocks = tbl2, costs = tc + c}
         | otherwise                 -> error "mergemove: not compatible shapes"
         where
             block0 = tbl0 Map.! bid0
@@ -142,6 +150,7 @@ mergemove bid0 bid1 world = case world of
                 | y00 == y10 -> Rectangle (min x00 x10, y00) (max x01 x11, y01)
                 | otherwise  -> error "mergemove: not compatible shapes"
             tbl1 = Map.insert (V.singleton cnt) (ComplexBlock newshp [block0, block1]) tbl0
+            tbl2 = foldr Map.delete tbl1 [bid0, bid1]
             c0 = cost (size cnvs) 1 shp0
             c1 = cost (size cnvs) 1 shp1
             c  = max c0 c1
@@ -173,14 +182,35 @@ sample
     [ "cut [0] [x] [200]"
     , "color [0.1] [255, 0, 0, 255]"
     , "merge [0.0] [0.1]"
-    , "cut [1] [y] [100]"
+    , "cut [1] [y] [200]"
     , "cut [1.0] [y] [100]"
     , "color [1.0.1] [0,255,0,255]"
     ]
 
 {- | local load
->>> load sample
+>>> localLoad sample
 [cut [0] [X] [200],color [0.1] [255,0,0,255],merge [0.0] [0.1],cut [1] [Y] [100],cut [1.0] [Y] [100],color [1.0.1] [0,255,0,255]]
 -}
-load :: String -> [Move]
-load src = [ read (filter (' '/=) l) | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 
+localLoad :: String -> [Move]
+localLoad src = [ read (filter (' '/=) l) | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 
+
+localEvalTrace :: World -> [World]
+localEvalTrace world = world : rests
+    where
+        rests
+            | isFinal world = []
+            | otherwise     = localEvalTrace (next world)
+
+next :: World -> World
+next = uncurry ($) . fetch
+
+
+isFinal :: World -> Bool
+isFinal = \ case
+    World { prog = is } -> null is
+
+initCanvas :: Canvas
+initCanvas = Rectangle (0,0) (400,400)
+
+world0 :: World
+world0 = initializeWorld initCanvas (map interp (localLoad sample))

@@ -1,7 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 module Block where
 
-import Data.List 
+import Data.List
+import Data.Maybe
 import qualified Data.Map as Map
 import qualified Data.Vector as V
 import qualified Graphics.Gloss as Gloss
@@ -15,6 +16,17 @@ data Block
     = SimpleBlock { shape :: Shape, blockColor :: Color }
     | ComplexBlock { shape :: Shape, children :: ChildBlocks }
     deriving (Eq, Show)
+
+shapingBlock :: Shape -> Block -> Maybe Block
+shapingBlock shp b = case b of
+    SimpleBlock shp1 col -> 
+        maybe Nothing (Just . flip SimpleBlock col) (intersectShape shp shp1)
+    ComplexBlock shp1 bs -> 
+        intersectShape shp shp1 >>= \ shp2 ->
+            case mapMaybe (shapingBlock shp) bs of
+                []   -> error "imposible!"
+                b:[] -> Just b
+                bs   -> Just $ ComplexBlock shp2 bs
 
 type ChildBlocks  = [Block]
 
@@ -40,7 +52,7 @@ initializeWorld cvs is
     = World
     { canvas = cvs
     , prog = is
-    , counter = 0
+    , counter = 1
     , blocks = Map.singleton (V.singleton 0)
                  (SimpleBlock (Rectangle (0,0) (400, 400)) white)
     , pict   = undefined
@@ -48,7 +60,7 @@ initializeWorld cvs is
     }
 
 initialWorld :: World
-initialWorld = initializeWorld (Rectangle (0,0) (399,399)) []
+initialWorld = initializeWorld (Rectangle (0,0) (400,400)) []
 
 
 white :: Color

@@ -39,7 +39,6 @@ shapeSize s = shapeWidth s * shapeHeight s
 sameShape :: Shape -> Shape -> Bool
 sameShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11))
     = x01 - x00 == x11 - x10 && y01 -y00 == y11 - y10
-sameShape _ _ = False
 
 compatibleShape :: Shape -> Shape -> Bool
 compatibleShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11))
@@ -48,7 +47,6 @@ compatibleShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y1
                    , [ x01 == x10, y00 == y10, y01 == y11 ]
                    , [ x00 == x11, y00 == y10, y01 == y11 ]
                    ]
-compatibleShape _ _ = False
 
 intersectShape :: Shape -> Shape -> Maybe Shape
 intersectShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11)) = if
