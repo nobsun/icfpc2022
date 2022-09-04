@@ -16,6 +16,7 @@ import Control.Monad.ST
 import Data.List (isPrefixOf)
 import qualified Data.Map.Strict as Map
 import Data.Monoid (Sum (..))
+import qualified Data.Vector.Generic as V
 
 import Types
 
@@ -43,7 +44,7 @@ evalISLWithCost config moves = runST $ do
   let cnt = length (icBlocks config) - 1
       blocks =
         Map.fromList
-        [ ([read (icbBlockId block)], Rectangle (icbBottomLeft block) (icbTopRight block))
+        [ (V.singleton (read (icbBlockId block)), Rectangle (icbBottomLeft block) (icbTopRight block))
         | block <- icBlocks config
         ]
 
@@ -75,8 +76,8 @@ evalMove move@(LCUT bid orientation offset) = do
         throwError ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show x ++ ".." ++ show x1)
       put $
         ( cnt
-        , Map.insert (0 : bid) (Rectangle (x,y) (offset,y1)) $
-          Map.insert (1 : bid) (Rectangle (offset,y) (x1,y1)) $
+        , Map.insert (V.snoc bid 0) (Rectangle (x,y) (offset,y1)) $
+          Map.insert (V.snoc bid 1) (Rectangle (offset,y) (x1,y1)) $
           Map.delete bid blocks
         )
     Y -> do
@@ -84,8 +85,8 @@ evalMove move@(LCUT bid orientation offset) = do
         throwError ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show y ++ ".." ++ show y1)
       put $
         ( cnt
-        , Map.insert (0 : bid) (Rectangle (x,y) (x1,offset)) $
-          Map.insert (1 : bid) (Rectangle (x,offset) (x1,y1)) $
+        , Map.insert (V.snoc bid 0) (Rectangle (x,y) (x1,offset)) $
+          Map.insert (V.snoc bid 1) (Rectangle (x,offset) (x1,y1)) $
           Map.delete bid blocks
         )
   canvasSize <- getCanvasSize
@@ -99,10 +100,10 @@ evalMove move@(PCUT bid (x1,y1)) = do
     ( cnt
     , Map.union (Map.delete bid blocks) $
       Map.fromList
-        [ (0 : bid, Rectangle (x0, y0) (x1, y1))
-        , (1 : bid, Rectangle (x1, y0) (x2, y1))
-        , (2 : bid, Rectangle (x1, y1) (x2, y2))
-        , (3 : bid, Rectangle (x0, y1) (x1, y2))
+        [ (V.snoc bid 0, Rectangle (x0, y0) (x1, y1))
+        , (V.snoc bid 1, Rectangle (x1, y0) (x2, y1))
+        , (V.snoc bid 2, Rectangle (x1, y1) (x2, y2))
+        , (V.snoc bid 3, Rectangle (x0, y1) (x1, y2))
         ]
     )
   canvasSize <- getCanvasSize
@@ -132,7 +133,7 @@ evalMove move@(MERGE bid1 bid2) = do
   shape2@(Rectangle (x2,y2) (x2',y2')) <- lookupBlock bid2
   let blocks' = Map.delete bid1 $ Map.delete bid2 blocks
       cnt' = cnt + 1
-      bid3 = [cnt']
+      bid3 = V.singleton cnt'
   if x1 == x2 && shapeWidth shape1 == shapeWidth shape2 && (y1' == y2 || y2' == y1) then do
     put (cnt', Map.insert bid3 (Rectangle (x1, min y1 y2) (x1', max y1' y2')) blocks')
   else if y1 == y2 && shapeHeight shape1 == shapeHeight shape2 && (x1' == x2 || x2' == x1) then do
@@ -162,93 +163,93 @@ addCost c = tell $ Sum (round' c)
 
 
 sampleMoves =
-  [ COLOR (reverse [0]) (0,74,173,255)
-  , PCUT (reverse [0]) (360,40)
-  , PCUT (reverse [0,3]) (320,80)
-  , COLOR (reverse [0,3,3]) (0,0,0,255)
-  , PCUT (reverse [0,3,3]) (160,240)
+  [ COLOR (V.fromList [0]) (0,74,173,255)
+  , PCUT (V.fromList [0]) (360,40)
+  , PCUT (V.fromList [0,3]) (320,80)
+  , COLOR (V.fromList [0,3,3]) (0,0,0,255)
+  , PCUT (V.fromList [0,3,3]) (160,240)
   --
-  , PCUT (reverse [0,3,3,0]) (80,160)
-  , PCUT (reverse [0,3,3,0,0]) (40,120)
-  , COLOR (reverse [0,3,3,0,0,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,0,0,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,0,1]) (120,120)
-  , COLOR (reverse [0,3,3,0,1,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,0,1,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,0,2]) (120,200)
-  , COLOR (reverse [0,3,3,0,2,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,0,2,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,0,3]) (40,200)
-  , COLOR (reverse [0,3,3,0,3,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,0,3,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,0]) (80,160)
+  , PCUT (V.fromList [0,3,3,0,0]) (40,120)
+  , COLOR (V.fromList [0,3,3,0,0,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,0,0,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,0,1]) (120,120)
+  , COLOR (V.fromList [0,3,3,0,1,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,0,1,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,0,2]) (120,200)
+  , COLOR (V.fromList [0,3,3,0,2,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,0,2,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,0,3]) (40,200)
+  , COLOR (V.fromList [0,3,3,0,3,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,0,3,3]) (255,255,255,255)
   --
-  , PCUT (reverse [0,3,3,1]) (240,160)
-  , PCUT (reverse [0,3,3,1,0]) (200,120)
-  , COLOR (reverse [0,3,3,1,0,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,1,0,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,1,1]) (280,120)
-  , COLOR (reverse [0,3,3,1,1,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,1,1,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,1,2]) (280,200)
-  , COLOR (reverse [0,3,3,1,2,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,1,2,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,1,3]) (200,200)
-  , COLOR (reverse [0,3,3,1,3,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,1,3,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,1]) (240,160)
+  , PCUT (V.fromList [0,3,3,1,0]) (200,120)
+  , COLOR (V.fromList [0,3,3,1,0,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,1,0,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,1,1]) (280,120)
+  , COLOR (V.fromList [0,3,3,1,1,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,1,1,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,1,2]) (280,200)
+  , COLOR (V.fromList [0,3,3,1,2,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,1,2,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,1,3]) (200,200)
+  , COLOR (V.fromList [0,3,3,1,3,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,1,3,3]) (255,255,255,255)
   --
-  , PCUT (reverse [0,3,3,2]) (240,320)
-  , PCUT (reverse [0,3,3,2,0]) (200,280)
-  , COLOR (reverse [0,3,3,2,0,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,2,0,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,2,1]) (280,280)
-  , COLOR (reverse [0,3,3,2,1,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,2,1,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,2,2]) (280,360)
-  , COLOR (reverse [0,3,3,2,2,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,2,2,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,2,3]) (200,360)
-  , COLOR (reverse [0,3,3,2,3,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,2,3,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,2]) (240,320)
+  , PCUT (V.fromList [0,3,3,2,0]) (200,280)
+  , COLOR (V.fromList [0,3,3,2,0,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,2,0,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,2,1]) (280,280)
+  , COLOR (V.fromList [0,3,3,2,1,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,2,1,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,2,2]) (280,360)
+  , COLOR (V.fromList [0,3,3,2,2,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,2,2,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,2,3]) (200,360)
+  , COLOR (V.fromList [0,3,3,2,3,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,2,3,3]) (255,255,255,255)
   --
-  , PCUT (reverse [0,3,3,3]) (80,320)
-  , PCUT (reverse [0,3,3,3,0]) (40,280)
-  , COLOR (reverse [0,3,3,3,0,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,3,0,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,3,1]) (120,280)
-  , COLOR (reverse [0,3,3,3,1,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,3,1,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,3,2]) (120,360)
-  , COLOR (reverse [0,3,3,3,2,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,3,2,3]) (255,255,255,255)
-  , PCUT (reverse [0,3,3,3,3]) (40,360)
-  , COLOR (reverse [0,3,3,3,3,1]) (255,255,255,255)
-  , COLOR (reverse [0,3,3,3,3,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,3]) (80,320)
+  , PCUT (V.fromList [0,3,3,3,0]) (40,280)
+  , COLOR (V.fromList [0,3,3,3,0,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,3,0,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,3,1]) (120,280)
+  , COLOR (V.fromList [0,3,3,3,1,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,3,1,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,3,2]) (120,360)
+  , COLOR (V.fromList [0,3,3,3,2,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,3,2,3]) (255,255,255,255)
+  , PCUT (V.fromList [0,3,3,3,3]) (40,360)
+  , COLOR (V.fromList [0,3,3,3,3,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,3,3,3,3]) (255,255,255,255)
   --
-  , COLOR (reverse [0,3,0]) (0,0,0,255)
-  , LCUT (reverse [0,3,0]) X 160
-  , LCUT (reverse [0,3,0,0]) X 80
-  , LCUT (reverse [0,3,0,0,0]) X 40
-  , COLOR (reverse [0,3,0,0,0,0]) (255,255,255,255)
-  , LCUT (reverse [0,3,0,0,1]) X 120
-  , COLOR (reverse [0,3,0,0,1,0]) (255,255,255,255)
-  , LCUT (reverse [0,3,0,1]) X 240
-  , LCUT (reverse [0,3,0,1,0]) X 200
-  , COLOR (reverse [0,3,0,1,0,0]) (255,255,255,255)
-  , LCUT (reverse [0,3,0,1,1]) X 280
-  , COLOR (reverse [0,3,0,1,1,0]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,0]) (0,0,0,255)
+  , LCUT (V.fromList [0,3,0]) X 160
+  , LCUT (V.fromList [0,3,0,0]) X 80
+  , LCUT (V.fromList [0,3,0,0,0]) X 40
+  , COLOR (V.fromList [0,3,0,0,0,0]) (255,255,255,255)
+  , LCUT (V.fromList [0,3,0,0,1]) X 120
+  , COLOR (V.fromList [0,3,0,0,1,0]) (255,255,255,255)
+  , LCUT (V.fromList [0,3,0,1]) X 240
+  , LCUT (V.fromList [0,3,0,1,0]) X 200
+  , COLOR (V.fromList [0,3,0,1,0,0]) (255,255,255,255)
+  , LCUT (V.fromList [0,3,0,1,1]) X 280
+  , COLOR (V.fromList [0,3,0,1,1,0]) (255,255,255,255)
   --
-  , COLOR (reverse [0,3,2]) (0,0,0,255)
-  , LCUT (reverse [0,3,2]) Y 240
-  , LCUT (reverse [0,3,2,0]) Y 160
-  , LCUT (reverse [0,3,2,0,0]) Y 120
-  , COLOR (reverse [0,3,2,0,0,1]) (255,255,255,255)
-  , LCUT (reverse [0,3,2,0,1]) Y 200
-  , COLOR (reverse [0,3,2,0,1,1]) (255,255,255,255)
-  , LCUT (reverse [0,3,2,1]) Y 320
-  , LCUT (reverse [0,3,2,1,0]) Y 280
-  , COLOR (reverse [0,3,2,1,0,1]) (255,255,255,255)
-  , LCUT (reverse [0,3,2,1,1]) Y 360
-  , COLOR (reverse [0,3,2,1,1,1]) (255,255,255,255)
+  , COLOR (V.fromList [0,3,2]) (0,0,0,255)
+  , LCUT (V.fromList [0,3,2]) Y 240
+  , LCUT (V.fromList [0,3,2,0]) Y 160
+  , LCUT (V.fromList [0,3,2,0,0]) Y 120
+  , COLOR (V.fromList [0,3,2,0,0,1]) (255,255,255,255)
+  , LCUT (V.fromList [0,3,2,0,1]) Y 200
+  , COLOR (V.fromList [0,3,2,0,1,1]) (255,255,255,255)
+  , LCUT (V.fromList [0,3,2,1]) Y 320
+  , LCUT (V.fromList [0,3,2,1,0]) Y 280
+  , COLOR (V.fromList [0,3,2,1,0,1]) (255,255,255,255)
+  , LCUT (V.fromList [0,3,2,1,1]) Y 360
+  , COLOR (V.fromList [0,3,2,1,1,1]) (255,255,255,255)
   ]
 
 

@@ -5,6 +5,7 @@ module ISL where
 
 import qualified Data.Map as Map
 import Data.Maybe
+import qualified Data.Vector.Generic as V
 import Types
 import Text.ParserCombinators.ReadP
 
@@ -52,8 +53,8 @@ lcut :: BlockId -> Orientation -> Offset -> Instruction
 lcut bid o off world = case world of
     World { canvas = cnvs, blocks  = tbl0, costs = tc } -> world { blocks = tbl3, costs = tc + c }
         where
-            b0@(bid0, block0) = (0:bid, SimpleBlock shp0 col)
-            b1@(bid1, block1) = (1:bid, SimpleBlock shp1 col)
+            b0@(bid0, block0) = (V.snoc bid 0, SimpleBlock shp0 col)
+            b1@(bid1, block1) = (V.snoc bid 1, SimpleBlock shp1 col)
             block = tbl0 Map.! bid
             col = blockColor block
             (x0,y0) = leftBottom (shape block)
@@ -95,10 +96,10 @@ pcut :: BlockId -> Point -> Instruction
 pcut bid (mx,my) world = case world of
     World { canvas = cnvs, blocks = tbl0, costs = tc } -> world { blocks = tbl2, costs = tc + c }
         where
-            b0@(bid0, block0) = (0:bid, SimpleBlock shp0 col)
-            b1@(bid1, block1) = (1:bid, SimpleBlock shp1 col)
-            b2@(bid2, block2) = (2:bid, SimpleBlock shp2 col)
-            b3@(bid3, block3) = (3:bid, SimpleBlock shp3 col)
+            b0@(bid0, block0) = (V.snoc bid 0, SimpleBlock shp0 col)
+            b1@(bid1, block1) = (V.snoc bid 1, SimpleBlock shp1 col)
+            b2@(bid2, block2) = (V.snoc bid 2, SimpleBlock shp2 col)
+            b3@(bid3, block3) = (V.snoc bid 3, SimpleBlock shp3 col)
             block = tbl0 Map.! bid
             col = blockColor block 
             (x0,y0) = leftBottom (shape block)
@@ -151,7 +152,7 @@ mergemove bid0 bid1 world = case world of
                 | x00 == x10 -> Rectangle (x00, min y00 y10) (x01, max y01 y11)
                 | y00 == y10 -> Rectangle (min x00 x10, y00) (max x01 x11, y01)
                 | otherwise  -> error "mergemove: not compatible shapes"
-            tbl1 = Map.insert [cnt] (ComplexBlock newshp [bid0, bid1]) tbl0
+            tbl1 = Map.insert (V.singleton cnt) (ComplexBlock newshp [bid0, bid1]) tbl0
             c0 = cost (size cnvs) 1 shp0
             c1 = cost (size cnvs) 1 shp1
             c  = max c0 c1
