@@ -1,13 +1,14 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE TemplateHaskell #-}
 module Types where
 
+import GHC.Generics (Generic)
+import Data.Aeson (FromJSON, ToJSON, genericParseJSON, genericToJSON, defaultOptions, Options (..))
 import qualified Data.Aeson as JSON
-import Data.Aeson.TH
 import Data.Char
 import qualified Data.Map as Map
 import Data.List
@@ -259,7 +260,16 @@ data InitialConfig
   , icHeight :: !Int
   , icBlocks :: [ICBlock]
   }
-  deriving (Show)
+  deriving (Show, Generic)
+
+initialConfigAesonOptions :: Options
+initialConfigAesonOptions = defaultOptions{fieldLabelModifier = (\(c:cs) -> toLower c : cs) . drop 2}
+
+instance FromJSON InitialConfig where
+  parseJSON = genericParseJSON initialConfigAesonOptions
+
+instance ToJSON InitialConfig where
+  toJSON = genericToJSON initialConfigAesonOptions
 
 data ICBlock
   = ICBlock
@@ -268,11 +278,17 @@ data ICBlock
   , icbTopRight :: Point
   , icbColor :: Color
   }
-  deriving (Show)
+  deriving (Show, Generic)
 
-$(deriveJSON defaultOptions{fieldLabelModifier = (\(c:cs) -> toLower c : cs) . drop 2} ''InitialConfig)
+icBlockAesonOptions :: Options
+icBlockAesonOptions = defaultOptions{fieldLabelModifier = (\(c:cs) -> toLower c : cs) . drop 3}
 
-$(deriveJSON defaultOptions{fieldLabelModifier = (\(c:cs) -> toLower c : cs) . drop 3} ''ICBlock)
+instance FromJSON ICBlock where
+  parseJSON = genericParseJSON icBlockAesonOptions
+
+instance ToJSON ICBlock where
+  toJSON = genericToJSON icBlockAesonOptions
+
 
 loadInitialConfig :: FilePath -> IO InitialConfig
 loadInitialConfig fname = do
