@@ -47,6 +47,11 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+  save-problems:
+    main:               save-problems.hs
+    source-dirs:        api-util
+    dependencies:
+    - icfpc2022
   average-color:
     main:                Main.hs
     source-dirs:         app/average-color
