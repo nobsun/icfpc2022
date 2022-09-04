@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 20a4d85e9e8ba705da1973f0dd9f65d619ad464bda01f3f65c97f2a2a849451a
+-- hash: 366a536b671fe8ff5b58ddeabfb5cb1bcb990d3aec41e30347978e20a0382f7b
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Content
+      EvalContent
       EvalJuicyPixels
       ISL
       Lib
