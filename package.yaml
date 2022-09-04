@@ -21,17 +21,17 @@ description:         Please see the README on GitHub at <https://github.com/nobs
 
 dependencies:
 - base >= 4.7 && < 5
-- unicode-show
+- array
 - bytestring
-- utf8-string
+- containers
 - time
+- mtl
+- vector
+- utf8-string
+- unicode-show
 - hspec
 - main-tester
 - gloss
-- containers
-- array
-- vector
-- mtl
 - JuicyPixels
 - primitive
 
