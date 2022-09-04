@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 517b6d8aacb8c525455810b7912d7bcd03f04f2eb6e9eb739d6764181608bcce
+-- hash: 20a4d85e9e8ba705da1973f0dd9f65d619ad464bda01f3f65c97f2a2a849451a
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Content
       EvalJuicyPixels
       ISL
       Lib
@@ -138,6 +139,31 @@ executable icfpc2022
       Paths_icfpc2022
   hs-source-dirs:
       app
+  ghc-options: -rtsopts
+  build-depends:
+      JuicyPixels
+    , array
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , gloss
+    , hspec
+    , icfpc2022
+    , main-tester
+    , mtl
+    , primitive
+    , time
+    , unicode-show
+    , utf8-string
+    , vector
+  default-language: Haskell2010
+
+executable layer
+  main-is: Main.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      app/layer
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
