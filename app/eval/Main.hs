@@ -4,7 +4,8 @@ import Codec.Picture
 import Control.Monad
 import Options.Applicative
 
-import EvalJuicyPixels
+import qualified EvalContent
+import qualified EvalJuicyPixels
 import Types
 
 
@@ -13,6 +14,7 @@ data Options
   { optOutput :: Maybe FilePath
   , optInitialConfig :: Maybe FilePath
   , optTarget :: Maybe FilePath
+  , optEvalEngine :: String
   , optInput :: FilePath
   }
 
@@ -21,6 +23,7 @@ optionsParser = Options
   <$> outputOption
   <*> initialConfigOption
   <*> targetOption
+  <*> evalEngineOption
   <*> fileInput
   where
     fileInput :: Parser FilePath
@@ -47,6 +50,14 @@ optionsParser = Options
       <> help "target image filename"
       <> showDefaultWith id
 
+    evalEngineOption :: Parser String
+    evalEngineOption = strOption
+      $  short 'e'
+      <> metavar "ENGINE"
+      <> help "evaluation engine name: \"content\" or default engine"
+      <> value ""
+      <> showDefault
+
 
 parserInfo :: ParserInfo Options
 parserInfo = info (optionsParser <**> helper)
@@ -57,6 +68,11 @@ parserInfo = info (optionsParser <**> helper)
 main :: IO ()
 main = do
   opt <- execParser parserInfo
+
+  let eval =
+        if optEvalEngine opt == "content"
+        then EvalContent.evalISLWithCost
+        else EvalJuicyPixels.evalISLWithCost
 
   initialConfig <-
     case optInitialConfig opt of
@@ -75,7 +91,7 @@ main = do
 
   moves <- loadISL (optInput opt)
   (img, cost) <-
-    case evalISLWithCost initialConfig moves of
+    case eval initialConfig moves of
       Left err -> fail err
       Right (img, cost) -> return (img, cost)
 
