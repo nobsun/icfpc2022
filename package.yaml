@@ -21,24 +21,19 @@ description:         Please see the README on GitHub at <https://github.com/nobs
 
 dependencies:
 - base >= 4.7 && < 5
-- unicode-show
-- bytestring
-- utf8-string
-- time
-- hspec
-- main-tester
-- gloss
 - containers
-- array
-- vector
 - mtl
 - JuicyPixels
-- primitive
 
 library:
   source-dirs: src
   dependencies:
+  - bytestring
+  - time
   - aeson
+  - vector
+  - gloss
+  - primitive
 
 executables:
   icfpc2022:
@@ -77,6 +72,15 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+  diagonal:
+    main:                Main.hs
+    source-dirs:         app/diagonal
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
   eval:
     main:                Main.hs
     source-dirs:         app/eval
@@ -107,6 +111,9 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
+    - bytestring
+    - utf8-string
+    - unicode-show
     - icfpc2022
     - hspec
     - main-tester
@@ -119,5 +126,10 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
+    - bytestring
+    - utf8-string
+    - unicode-show
     - icfpc2022
     - doctest
+    - hspec
+    - main-tester
