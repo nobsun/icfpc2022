@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 52b75f71bd19d9d6e76865e8468e520818dc8cfd3fe1ddf3b3fd33c12df67950
+-- hash: 9495ccf78bd788c02236a1784546f1764c03d882bfed6de746afefc0e0635503
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       ApiJSON
+      ApiUtil
       Block
       Content
       EvalContent
@@ -35,6 +36,7 @@ library
       ISL
       Lib
       Oga
+      PaintMonad
       Sandbox
       Types
   other-modules:
@@ -47,9 +49,11 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , filepath
     , gloss
     , mtl
     , primitive
+    , process
     , time
     , vector
   default-language: Haskell2010
@@ -153,6 +157,20 @@ executable mosaic-color
   hs-source-dirs:
       app/mosaic-color
   ghc-options: -rtsopts
+  build-depends:
+      JuicyPixels
+    , base >=4.7 && <5
+    , containers
+    , icfpc2022
+    , mtl
+  default-language: Haskell2010
+
+executable save-problems
+  main-is: save-problems.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      api-util
   build-depends:
       JuicyPixels
     , base >=4.7 && <5

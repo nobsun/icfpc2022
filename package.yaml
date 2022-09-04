@@ -29,6 +29,8 @@ library:
   source-dirs: src
   dependencies:
   - bytestring
+  - filepath
+  - process
   - time
   - aeson
   - vector
@@ -43,6 +45,11 @@ executables:
     - -rtsopts
     # - -threaded
     # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
+  save-problems:
+    main:               save-problems.hs
+    source-dirs:        api-util
     dependencies:
     - icfpc2022
   average-color:
