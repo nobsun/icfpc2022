@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c896abe52ea91a39a2098287c84baf13ef22aa3f27aea8840e40ac52eeaedf08
+-- hash: 52b75f71bd19d9d6e76865e8468e520818dc8cfd3fe1ddf3b3fd33c12df67950
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -44,7 +44,6 @@ library
   build-depends:
       JuicyPixels
     , aeson
-    , array
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -64,16 +63,10 @@ executable average-color
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
-    , bytestring
     , containers
-    , gloss
     , icfpc2022
     , mtl
-    , primitive
-    , time
-    , vector
   default-language: Haskell2010
 
 executable compare-image
@@ -85,17 +78,26 @@ executable compare-image
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
-    , bytestring
     , containers
-    , gloss
     , icfpc2022
     , mtl
     , optparse-applicative
-    , primitive
-    , time
-    , vector
+  default-language: Haskell2010
+
+executable diagonal
+  main-is: Main.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      app/diagonal
+  ghc-options: -rtsopts
+  build-depends:
+      JuicyPixels
+    , base >=4.7 && <5
+    , containers
+    , icfpc2022
+    , mtl
   default-language: Haskell2010
 
 executable eval
@@ -107,17 +109,11 @@ executable eval
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
-    , bytestring
     , containers
-    , gloss
     , icfpc2022
     , mtl
     , optparse-applicative
-    , primitive
-    , time
-    , vector
   default-language: Haskell2010
 
 executable icfpc2022
@@ -129,16 +125,10 @@ executable icfpc2022
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
-    , bytestring
     , containers
-    , gloss
     , icfpc2022
     , mtl
-    , primitive
-    , time
-    , vector
   default-language: Haskell2010
 
 executable layer
@@ -150,16 +140,10 @@ executable layer
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
-    , bytestring
     , containers
-    , gloss
     , icfpc2022
     , mtl
-    , primitive
-    , time
-    , vector
   default-language: Haskell2010
 
 executable mosaic-color
@@ -171,16 +155,10 @@ executable mosaic-color
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
-    , bytestring
     , containers
-    , gloss
     , icfpc2022
     , mtl
-    , primitive
-    , time
-    , vector
   default-language: Haskell2010
 
 test-suite icfpc2022-doctest
@@ -193,21 +171,16 @@ test-suite icfpc2022-doctest
       test
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
     , bytestring
     , containers
     , doctest
-    , gloss
     , hspec
     , icfpc2022
     , main-tester
     , mtl
-    , primitive
-    , time
     , unicode-show
     , utf8-string
-    , vector
   default-language: Haskell2010
 
 test-suite icfpc2022-test
@@ -220,18 +193,13 @@ test-suite icfpc2022-test
       test
   build-depends:
       JuicyPixels
-    , array
     , base >=4.7 && <5
     , bytestring
     , containers
-    , gloss
     , hspec
     , icfpc2022
     , main-tester
     , mtl
-    , primitive
-    , time
     , unicode-show
     , utf8-string
-    , vector
   default-language: Haskell2010

@@ -21,20 +21,19 @@ description:         Please see the README on GitHub at <https://github.com/nobs
 
 dependencies:
 - base >= 4.7 && < 5
-- array
-- bytestring
 - containers
-- time
 - mtl
-- vector
-- gloss
 - JuicyPixels
-- primitive
 
 library:
   source-dirs: src
   dependencies:
+  - bytestring
+  - time
   - aeson
+  - vector
+  - gloss
+  - primitive
 
 executables:
   icfpc2022:
@@ -112,6 +111,7 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
+    - bytestring
     - utf8-string
     - unicode-show
     - icfpc2022
@@ -126,6 +126,7 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
+    - bytestring
     - utf8-string
     - unicode-show
     - icfpc2022
