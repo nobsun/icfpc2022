@@ -73,6 +73,15 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+  diagonal:
+    main:                Main.hs
+    source-dirs:         app/diagonal
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - icfpc2022
   eval:
     main:                Main.hs
     source-dirs:         app/eval
