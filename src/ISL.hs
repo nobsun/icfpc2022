@@ -27,11 +27,11 @@ interp pl world = case pl of
         MERGE bid1 bid2 -> mergemove bid1 bid2 world
 
 {- | lcut : Line Cut Move instruction 
->>> lcut [0] X 100 initialWorld
+>>> lcut (V.fromList [0] :: BlockId) X 100 initialWorld
 [0.0]: Rectangle {leftBottom = (0,0), rightUpper = (100,400)} [255,255,255,255]
 [0.1]: Rectangle {leftBottom = (100,0), rightUpper = (400,400)} [255,255,255,255]
 <BLANKLINE>
->>> lcut [0] Y 100 initialWorld
+>>> lcut (V.fromList [0] :: BlockId) Y 100 initialWorld
 [0.0]: Rectangle {leftBottom = (0,0), rightUpper = (400,100)} [255,255,255,255]
 [0.1]: Rectangle {leftBottom = (0,100), rightUpper = (400,400)} [255,255,255,255]
 <BLANKLINE>
@@ -61,7 +61,8 @@ lcut bid o off world = case world of
             c = cost (size cnvs) 7 (shape block)
 
 {- | pcut : Point Cut Move instruction
->>> bs  = [([1], SimpleBlock (Rectangle (0,0) (40, 50)) green), ([2], SimpleBlock (Rectangle (0,50) (40, 400)) red), ([3], SimpleBlock (Rectangle (40,0) (400, 400)) white)]
+>>> import Control.Arrow
+>>> bs  = map (first V.fromList) [([1], SimpleBlock (Rectangle (0,0) (40, 50)) green), ([2], SimpleBlock (Rectangle (0,50) (40, 400)) red), ([3], SimpleBlock (Rectangle (40,0) (400, 400)) white)]
 >>> tbl = foldr (uncurry Map.insert) Map.empty bs
 >>> world0 = initialWorld
 >>> world1 = world0 { blocks = tbl }
@@ -70,13 +71,13 @@ lcut bid o off world = case world of
 [2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255]
 [3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255]
 <BLANKLINE>
->>> pcut [1] (30, 30) world1
+>>> pcut (V.fromList [1] :: BlockId) (30, 30) world1
 [1.0]: Rectangle {leftBottom = (0,0), rightUpper = (30,30)} [0,255,0,255]
 [1.1]: Rectangle {leftBottom = (30,0), rightUpper = (40,30)} [0,255,0,255]
-[2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255]
 [1.2]: Rectangle {leftBottom = (30,30), rightUpper = (40,50)} [0,255,0,255]
-[3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255]
 [1.3]: Rectangle {leftBottom = (0,30), rightUpper = (30,50)} [0,255,0,255]
+[2]: Rectangle {leftBottom = (0,50), rightUpper = (40,400)} [255,0,0,255]
+[3]: Rectangle {leftBottom = (40,0), rightUpper = (400,400)} [255,255,255,255]
 <BLANKLINE>
 -}
 pcut :: BlockId -> Point -> Instruction
@@ -176,5 +177,9 @@ sample
     , "color [1.0.1] [0,255,0,255]"
     ]
 
+{- | local load
+>>> load sample
+[cut [0] [X] [200],color [0.1] [255,0,0,255],merge [0.0] [0.1],cut [1] [Y] [100],cut [1.0] [Y] [100],color [1.0.1] [0,255,0,255]]
+-}
 load :: String -> [Move]
 load src = [ read (filter (' '/=) l) | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 
