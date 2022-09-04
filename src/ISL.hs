@@ -4,24 +4,11 @@
 module ISL where
 
 import qualified Data.Map as Map
+import Data.List
 import Data.Maybe
 import qualified Data.Vector.Generic as V
 import Types
 import Text.ParserCombinators.ReadP
-
-rProgram :: ReadP [ProgLine]
-rProgram = sepBy1 rProgramLine rNewline <* eof 
-
-rNewline :: ReadP ProgLine
-rNewline = Newline <$ char '\n'
-
-rProgramLine :: ReadP ProgLine
-rProgramLine = rNewline +++ rComment +++ (Move <$> rMove)
-
-rComment :: ReadP ProgLine
-rComment = Comment <$> (char '#' *> munch (/= '\n'))
-
---
 
 fetch :: World -> (Instruction, World)
 fetch world = ( head (prog world)
@@ -188,3 +175,6 @@ sample
     , "cut [1.0] [y] [100]"
     , "color [1.0.1] [0,255,0,255]"
     ]
+
+load :: String -> [Move]
+load src = [ read l | l <- lines src, not (null l || "#" `isPrefixOf` l) ] 

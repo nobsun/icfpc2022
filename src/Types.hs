@@ -94,7 +94,10 @@ data Move
     | COLOR BlockId Color
     | SWAP  BlockId BlockId 
     | MERGE BlockId BlockId 
-    deriving (Eq, Show)
+    deriving Eq
+
+instance Show Move where
+    show = dispMove
 
 instance Read Move where
     readsPrec _ = readP_to_S (skipSpaces *> rMove)
