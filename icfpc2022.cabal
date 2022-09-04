@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0abe2b5b4d844065269ef963131b3c1e61bb7a7e286c52a6efdb451433e96e79
+-- hash: f503b08885443c45a8a44190e1783f37a6c0e68bc1c7c00aac7a184a2deae91b
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -49,12 +49,9 @@ library
     , bytestring
     , containers
     , gloss
-    , hspec
-    , main-tester
     , mtl
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010
@@ -73,13 +70,10 @@ executable average-color
     , bytestring
     , containers
     , gloss
-    , hspec
     , icfpc2022
-    , main-tester
     , mtl
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010
@@ -98,14 +92,11 @@ executable compare-image
     , bytestring
     , containers
     , gloss
-    , hspec
     , icfpc2022
-    , main-tester
     , mtl
     , optparse-applicative
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010
@@ -124,14 +115,11 @@ executable eval
     , bytestring
     , containers
     , gloss
-    , hspec
     , icfpc2022
-    , main-tester
     , mtl
     , optparse-applicative
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010
@@ -150,13 +138,10 @@ executable icfpc2022
     , bytestring
     , containers
     , gloss
-    , hspec
     , icfpc2022
-    , main-tester
     , mtl
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010
@@ -175,13 +160,10 @@ executable layer
     , bytestring
     , containers
     , gloss
-    , hspec
     , icfpc2022
-    , main-tester
     , mtl
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010
@@ -200,13 +182,10 @@ executable mosaic-color
     , bytestring
     , containers
     , gloss
-    , hspec
     , icfpc2022
-    , main-tester
     , mtl
     , primitive
     , time
-    , unicode-show
     , utf8-string
     , vector
   default-language: Haskell2010

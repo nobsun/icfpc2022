@@ -28,9 +28,6 @@ dependencies:
 - mtl
 - vector
 - utf8-string
-- unicode-show
-- hspec
-- main-tester
 - gloss
 - JuicyPixels
 - primitive
@@ -107,6 +104,7 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
+    - unicode-show
     - icfpc2022
     - hspec
     - main-tester
@@ -119,5 +117,8 @@ tests:
     # - -rtsopts
     # - -with-rtsopts=-N
     dependencies:
+    - unicode-show
     - icfpc2022
     - doctest
+    - hspec
+    - main-tester
