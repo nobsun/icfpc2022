@@ -52,11 +52,7 @@ initialize config = do
         writePixel img x (mutableImageHeight img - 1 - y) px
 
   let cnt = icCounter config
-      blocks =
-        Map.fromList
-        [ (icbBlockIdParsed block, Rectangle (icbBottomLeft block) (icbTopRight block))
-        | block <- icBlocks config
-        ]
+      blocks = Map.fromList [(icbBlockIdParsed block, icbShape block) | block <- icBlocks config]
 
   return (img, (cnt, blocks))
 

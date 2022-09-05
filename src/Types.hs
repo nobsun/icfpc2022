@@ -233,6 +233,9 @@ icbParseBlockId s = read ("[" ++ s ++ "]")
 icbBlockIdParsed :: ICBlock -> BlockId
 icbBlockIdParsed = icbParseBlockId . icbBlockId
 
+icbShape :: ICBlock -> Shape
+icbShape block = Rectangle (icbBottomLeft block) (icbTopRight block)
+
 loadInitialConfig :: FilePath -> IO InitialConfig
 loadInitialConfig fname = do
   ret <- JSON.decodeFileStrict' fname
