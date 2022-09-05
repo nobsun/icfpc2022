@@ -187,6 +187,7 @@ loadISL fname = do
   s <- readFile fname
   return [read l | l <- lines s, not ("#" `isPrefixOf` l)]
 
+-- ------------------------------------------------------------------------
 
 data InitialConfig
   = InitialConfig
@@ -204,6 +205,9 @@ instance FromJSON InitialConfig where
 
 instance ToJSON InitialConfig where
   toJSON = genericToJSON initialConfigAesonOptions
+
+icCounter :: InitialConfig -> Int
+icCounter config = maximum [V.head (icbBlockIdParsed block) | block <- icBlocks config]
 
 data ICBlock
   = ICBlock
@@ -223,6 +227,11 @@ instance FromJSON ICBlock where
 instance ToJSON ICBlock where
   toJSON = genericToJSON icBlockAesonOptions
 
+icbParseBlockId :: String -> BlockId
+icbParseBlockId s = read ("[" ++ s ++ "]")
+
+icbBlockIdParsed :: ICBlock -> BlockId
+icbBlockIdParsed = icbParseBlockId . icbBlockId
 
 loadInitialConfig :: FilePath -> IO InitialConfig
 loadInitialConfig fname = do

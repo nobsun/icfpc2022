@@ -51,10 +51,10 @@ initialize config = do
       forM_ [x1..x2-1] $ \x -> do
         writePixel img x (mutableImageHeight img - 1 - y) px
 
-  let cnt = length (icBlocks config) - 1
+  let cnt = icCounter config
       blocks =
         Map.fromList
-        [ (V.singleton (read (icbBlockId block)), Rectangle (icbBottomLeft block) (icbTopRight block))
+        [ (icbBlockIdParsed block, Rectangle (icbBottomLeft block) (icbTopRight block))
         | block <- icBlocks config
         ]
 
