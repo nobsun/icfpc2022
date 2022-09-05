@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiWayIf #-}
 module PaintMonad
   ( genMoves
 
@@ -20,13 +21,17 @@ module PaintMonad
 
   , sample_problem_1
   , sample_problem_2
+  , sample_problem_3
   ) where
 
+import Codec.Picture
 import Control.Monad.RWS.Strict
+import Control.Monad.State.Strict
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import qualified Data.Foldable as F
 import qualified Data.Sequence as Seq
+import qualified Data.Set as Set
 import qualified Data.Vector.Generic as V
 
 import Types
@@ -63,6 +68,11 @@ modifyBlocks f = modify g
     g (cnt, m) = seq m' (cnt, m')
       where
         m' = f m
+
+debugCheckBlockShape :: BlockId -> Shape -> String -> Paint ()
+debugCheckBlockShape bid shape msg = do
+  shape1 <- getBlockShape bid
+  unless (shape == shape1) $ fail ("shape mismatch: " ++ msg)
 
 emitMove :: Move -> Paint ()
 emitMove move = tell (Seq.singleton move)
@@ -167,14 +177,83 @@ pmerge (b1, b2, b3, b4) = do
   merge bot top
 
 focus :: BlockId -> Shape -> (BlockId -> Paint BlockId) -> Paint BlockId
-focus parent (Rectangle bl tr) f = do
-  -- TODO: 面積が0になる分割を行ってしまうことを避ける
-  -- そのためにはブロックの座標をちゃんとトラックしていないといけない
-  (b1,b2,b3,b4) <- pcut parent bl
-  (b31,b32,b33,b34) <- pcut b3 tr
-  b31 <- f b31
-  b3 <- pmerge (b31,b32,b33,b34)
-  pmerge (b1,b2,b3,b4)
+focus parent s1@(Rectangle bl1@(x1,y1) tr1@(x1',y1')) f = do
+  s0@(Rectangle bl0@(x0,y0) tr0@(x0',y0')) <- getBlockShape parent
+
+  if | s1 == s0 -> f parent
+
+     -- 下に張り付いている場合
+     | y1 == y0 -> do
+         if x1' == x0' then do
+           -- 右下に張り付いている場合
+           (b1,b2,b3,b4) <- pcut parent (x1,y1') -- 左上の点で分割
+           debugCheckBlockShape b2 s1 "A"
+           b2 <- f b2
+           pmerge (b1,b2,b3,b4)
+         else do
+           (b1,b2,b3,b4) <- pcut parent tr1 -- 右上の点で分割
+           b1 <-
+             if x1 == x0 then do
+               -- 左下に張り付いている場合
+               debugCheckBlockShape b1 s1 "B"
+               f b1
+             else do
+               -- 右下にも左下にも張り付いていない場合
+               (b1l,b1r) <- lcut b1 X x1
+               debugCheckBlockShape b1r s1 "C"
+               b1r <- f b1r
+               merge b1l b1r
+           pmerge (b1,b2,b3,b4)
+
+     -- 上に張り付いている場合
+     | y1' == y0' -> do
+         if x1 == x0 then do
+           -- 左上に張り付いている場合
+           (b1,b2,b3,b4) <- pcut parent (x1',y1) -- 右下の点で分割
+           debugCheckBlockShape b4 s1 "D"
+           b4 <- f b4
+           pmerge (b1,b2,b3,b4)
+         else do
+           (b1,b2,b3,b4) <- pcut parent bl1
+           b3 <-
+             if x1' == x0' then do
+               -- 右上に張り付いている場合
+               debugCheckBlockShape b3 s1 "E"
+               f b3
+             else do
+               -- 左上にも右上にも張り付いていない場合
+               (b3l,b3r) <- lcut b3 X x1
+               debugCheckBlockShape b3r s1 "F"
+               b3r <- f b3r
+               merge b3l b3r
+           pmerge (b1,b2,b3,b4)
+
+     -- 左にだけ張り付いている場合
+     | x1 == x0 -> do
+         (b1,b2,b3,b4) <- pcut parent tr1 -- 右上の点で分割
+         (b1b, b1t) <- lcut b1 Y y1
+         debugCheckBlockShape b1t s1 "G"
+         b1t <- f b1t
+         b1 <- merge b1b b1t
+         pmerge (b1,b2,b3,b4)
+
+     -- 右にだけ張り付いている場合
+     | x1' == x0' -> do
+         (b1,b2,b3,b4) <- pcut parent bl1 -- 左下の点で分割
+         (b3b, b3t) <- lcut b3 Y y1'
+         debugCheckBlockShape b3b s1 "H"
+         b3b <- f b3b
+         b3 <- merge b3b b3t
+         pmerge (b1,b2,b3,b4)
+
+     -- どこにも張り付いていない場合
+     | otherwise -> do
+         (b1,b2,b3,b4) <- pcut parent bl1
+         (b31,b32,b33,b34) <- pcut b3 tr1
+         debugCheckBlockShape b31 s1 "I"
+         b31 <- f b31
+         b3 <- pmerge (b31,b32,b33,b34)
+         pmerge (b1,b2,b3,b4)
 
 fillRect :: BlockId -> Shape -> Color -> Paint BlockId
 fillRect bid rect c =
@@ -272,3 +351,56 @@ sample_problem_2 = moves
       mid_and_top <- fillRect mid_and_top (Rectangle (219,314) (237,335)) (255,255,255,255)
 
       return ()
+
+
+sample_problem_3 :: IO [Move]
+sample_problem_3 = do
+  Right (ImageRGBA8 img) <- readImage "probs/3.png"
+  let black = (0,0,0,255)
+      white = (255,255,255,255)
+      red = (255,22,22,255)
+      gray = (216,219,219,255)
+      yellow = (255,222,89,255)
+      purple = (94,23,235,255)
+      orange = (255,145,77,255)
+      navy = (0,74,173,255)
+      green1 = (201,226,101,255)
+      green2 = (126,217,87,255)
+      boxColors = [white, red, gray, yellow, purple, orange, navy, green1, green2]
+
+  let findBoxes :: Color -> Int -> [(Int, Int, Int, Int)]
+      findBoxes (r,g,b,a) eps = f [] ps
+        where
+          px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
+          ps = Set.fromList
+               [ (x,y)
+               | y <- [0..imageHeight img - 1], x <- [0..imageWidth img - 1]
+               , let PixelRGBA8 r1 g1 b1 a1 = pixelAt img x y
+               , let eps = 20
+               , abs (fromIntegral r1 - r) < eps && abs (fromIntegral g1 - g) < eps && abs (fromIntegral b1 - b) < eps && abs (fromIntegral a1 - a) < eps
+               ]
+          f ret ps
+            | Set.null ps = ret
+            | otherwise = f (if w >= 2 && h >= 2 then (x0, y0, w, h) : ret else ret)
+                            (ps Set.\\ Set.fromList [(x,y) | x<-[x0..x1], y<-[y0..y1]])
+                where
+                  (x0,y0) = Set.findMin ps
+                  x1 = last $ x0 : takeWhile (\x' -> (x',y0) `Set.member` ps) [x0+1..]
+                  y1 = last $ y0 : takeWhile (\y' -> all (\x' -> (x',y') `Set.member` ps) [x0..x1]) [y0+1..]
+                  w = x1-x0+1
+                  h = y1-y0+1
+
+      findShapes :: Color -> Int -> [Shape]
+      findShapes color eps =
+        [Rectangle (x, imageHeight img - (y+h)) (x+w, imageHeight img - y)  | (x,y,w,h) <- findBoxes color eps]
+
+  let (moves, cnt) = genMoves defaultInitialConfig $ \[block0] -> do
+        color block0 black
+        let m = forM_ boxColors $ \color -> do
+                  forM_ (findShapes color 10) $ \rect -> do
+                    bid <- get
+                    bid <- lift $ fillRect bid rect color
+                    put bid
+        runStateT m block0
+
+  return moves
