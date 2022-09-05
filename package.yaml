@@ -54,6 +54,11 @@ executables:
     source-dirs:        api-util
     dependencies:
     - icfpc2022
+  save-submissions:
+    main:               save-submissions.hs
+    source-dirs:        api-util
+    dependencies:
+    - icfpc2022
   average-color:
     main:                Main.hs
     source-dirs:         app/average-color

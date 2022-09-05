@@ -194,6 +194,20 @@ executable save-problems
     , mtl
   default-language: Haskell2010
 
+executable save-submissions
+  main-is: save-submissions.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      api-util
+  build-depends:
+      JuicyPixels
+    , base >=4.7 && <5
+    , containers
+    , icfpc2022
+    , mtl
+  default-language: Haskell2010
+
 test-suite icfpc2022-doctest
   type: exitcode-stdio-1.0
   main-is: doctests.hs
