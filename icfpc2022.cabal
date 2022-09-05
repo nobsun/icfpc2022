@@ -35,6 +35,7 @@ library
       Lib
       Oga
       PaintMonad
+      PaintMonad.Samples
       Sandbox
       Types
   other-modules:
