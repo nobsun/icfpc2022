@@ -65,7 +65,7 @@ glossDisplayWorld pict world
     $ Gloss.translate dx dy $ foldr1 (<>) $ map blockToGlossPicture $ Map.elems $ blocks world
     }
     where
-        window = Gloss.FullScreen
+        window = Gloss.InWindow "ICFP 2022" (960,960) (1500,400) -- Gloss.FullScreen
         can   = canvas world
         (dx,dy) = ( fromIntegral $ negate $ halve $ shapeWidth can
                   , fromIntegral $ negate $ halve $ shapeHeight can

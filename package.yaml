@@ -116,6 +116,12 @@ executables:
     dependencies:
     - icfpc2022
     - gloss-juicy
+  pngview:
+    main:                Main.hs
+    source-dirs:         app/gloss/pngview
+    dependencies:
+    - gloss
+    - gloss-juicy
 
 tests:
   icfpc2022-test:
