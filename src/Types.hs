@@ -9,6 +9,7 @@ module Types where
 import GHC.Generics (Generic)
 import Codec.Picture
 import Control.Exception (assert)
+import Control.Monad
 import Data.Aeson (FromJSON, ToJSON, genericParseJSON, genericToJSON, defaultOptions, Options (..))
 import qualified Data.Aeson as JSON
 import Data.Char
@@ -64,6 +65,14 @@ intersectShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11
     | x00 >= x11 || x01 <= x10 -> Nothing
     | y00 >= y11 || y01 <= y10 -> Nothing
     | otherwise -> Just $ Rectangle (max x00 x10, max y00 y10) (min x01 x11, min y01 y11) 
+
+-- |
+-- >>> mergeShape (Rectangle (0,0) (1,1)) (Rectangle (1,0) (2,1))
+-- Just (Rectangle {leftBottom = (0,0), rightUpper = (2,1)})
+mergeShape :: Shape -> Shape -> Maybe Shape
+mergeShape s1@(Rectangle (x00, y00) (x01, y01)) s2@(Rectangle (x10, y10) (x11, y11)) = do
+    guard $ compatibleShape s1 s2
+    return $ Rectangle (min x00 x10, min y00 y10) (max x01 x11, max y01 y11)
 
 type BlockId = V.Vector Int
 
