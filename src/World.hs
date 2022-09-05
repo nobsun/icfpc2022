@@ -37,10 +37,25 @@ initializeWorld can tab is
     { canvas = can
     , prog = is
     , counter = 1
-    , blocks = tab -- Map.singleton (V.singleton 0) (SimpleBlock can white)
+    , blocks = tab
     , picture = undefined
     , costs  = 0
     }
+
+sampleWorld :: World
+sampleWorld = initializeWorld sampleCanvas sampleBlockTable []
+
+sampleBlockTable :: BlockTable
+sampleBlockTable = Map.singleton (V.singleton 0) sampleBlock
+
+sampleCanvas :: Canvas
+sampleCanvas = Rectangle (0,0) (400,400)
+
+sampleBlock :: Block
+sampleBlock = SimpleBlock sampleShape white
+
+sampleShape :: Shape
+sampleShape = Rectangle (0,0) (400,400)
 
 white :: Color
 white = (255,255,255,255)
