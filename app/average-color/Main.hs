@@ -100,10 +100,9 @@ main = do
                    , let px2 = pixelAt img x (imageHeight img - 1 - y)
                    ]
         sim2 = sum [pixelDiff px px2 | y <- [y1..y2-1], x <- [x1..x2-1], let px2 = pixelAt img x (imageHeight img - 1 - y)]
+        -- TODO: basic cost の変化を考慮する
         cost :: Integer
         cost = roundJS (5 * fromIntegral (icWidth config * icHeight config) / fromIntegral (shapeSize shape) :: Double)
-    -- print cost
-    -- print (alpha * (sim1 - sim2))
     when (fromIntegral cost <= alpha * (sim1 - sim2)) $
       putStrLn $ dispMove $ COLOR bid (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
 
