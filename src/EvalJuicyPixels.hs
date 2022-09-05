@@ -4,6 +4,8 @@ module EvalJuicyPixels
   , evalISLWithCost
   , initialize
   , evalMove
+
+  , initializeImage
   ) where
 
 import Codec.Picture
@@ -42,6 +44,14 @@ evalISLWithCost config src moves = runST $ do
 
 initialize :: PrimMonad m => InitialConfig -> Maybe (Image PixelRGBA8) -> m (MutableImage (PrimState m) PixelRGBA8, (Int, Map.Map BlockId Shape))
 initialize config src = do
+  img <- initializeImage config src
+  let cnt = icCounter config
+      blocks = Map.fromList [(icbBlockIdParsed block, icbShape block) | block <- icBlocks config]
+  return (img, (cnt, blocks))
+
+
+initializeImage :: PrimMonad m => InitialConfig -> Maybe (Image PixelRGBA8) -> m (MutableImage (PrimState m) PixelRGBA8)
+initializeImage config src = do
   img <- createMutableImage (icWidth config) (icHeight config) (PixelRGBA8 255 255 255 255)
   forM_ (icBlocks config) $ \block -> do
     let (x1,y1) = icbBottomLeft block
@@ -60,10 +70,7 @@ initialize config src = do
                    let px = pixelAt src' (x3 + x) (imageHeight src' - 1 - (y3 + y))
                    writePixel img x (mutableImageHeight img - 1 - y) px
        | otherwise -> error "no color or pngBottomLeftPoint found"
-  let cnt = icCounter config
-      blocks = Map.fromList [(icbBlockIdParsed block, icbShape block) | block <- icBlocks config]
-
-  return (img, (cnt, blocks))
+  return img
 
 
 evalMove

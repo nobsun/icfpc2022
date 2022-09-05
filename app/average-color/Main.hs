@@ -1,24 +1,28 @@
 module Main where
 
 import Codec.Picture
+import Codec.Picture.Types (freezeImage)
 import Control.Monad
 import Control.Monad.ST
 import Data.List
 import Options.Applicative
 import qualified Data.Vector.Unboxed.Mutable as VUM
 
+import EvalJuicyPixels (initializeImage)
 import Types
 
 
 data Options
   = Options
   { optInitialConfig :: Maybe FilePath
+  , optSourceImage :: Maybe FilePath
   , optInput :: FilePath
   }
 
 optionsParser :: Parser Options
 optionsParser = Options
   <$> initialConfigOption
+  <*> sourceImageOption
   <*> fileInput
   where
     fileInput :: Parser FilePath
@@ -29,6 +33,13 @@ optionsParser = Options
       $  short 'c'
       <> metavar "FILE"
       <> help "initial config"
+      <> showDefaultWith id
+
+    sourceImageOption :: Parser (Maybe FilePath)
+    sourceImageOption = optional $ strOption
+      $  short 's'
+      <> metavar "FILE"
+      <> help "source image filename"
       <> showDefaultWith id
 
 
@@ -68,7 +79,34 @@ main = do
       Nothing -> return defaultInitialConfig
       Just fname -> loadInitialConfig fname
 
+  sourceImage <-
+    case optSourceImage opt of
+      Nothing -> return Nothing
+      Just fname -> do
+        Right (ImageRGBA8 img) <- readImage fname
+        return (Just img)
+  img0 <- freezeImage =<< initializeImage config sourceImage
+
   forM_ (icBlocks config) $ \block -> do
     let bid = icbBlockIdParsed block
-        PixelRGBA8 r g b a = averageColor img (Rectangle (icbBottomLeft block) (icbTopRight block))
-    putStrLn $ dispMove $ COLOR bid (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
+        shape = Rectangle (icbBottomLeft block) (icbTopRight block)
+        (x1, y1) = icbBottomLeft block
+        (x2, y2) = icbTopRight block
+        px@(PixelRGBA8 r g b a) = averageColor img shape
+        sim1, sim2 :: Double
+        sim1 = sum [ pixelDiff px0 px2
+                   | y <- [y1..y2-1], x <- [x1..x2-1]
+                   , let px0 = pixelAt img0 x (imageHeight img0 - 1 - y)
+                   , let px2 = pixelAt img x (imageHeight img - 1 - y)
+                   ]
+        sim2 = sum [pixelDiff px px2 | y <- [y1..y2-1], x <- [x1..x2-1], let px2 = pixelAt img x (imageHeight img - 1 - y)]
+        cost :: Integer
+        cost = roundJS (5 * fromIntegral (icWidth config * icHeight config) / fromIntegral (shapeSize shape) :: Double)
+    -- print cost
+    -- print (alpha * (sim1 - sim2))
+    when (fromIntegral cost <= alpha * (sim1 - sim2)) $
+      putStrLn $ dispMove $ COLOR bid (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
+
+
+alpha = 0.005
+
