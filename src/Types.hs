@@ -14,6 +14,7 @@ import Data.Aeson (FromJSON, ToJSON, genericParseJSON, genericToJSON, defaultOpt
 import qualified Data.Aeson as JSON
 import Data.Char
 import qualified Data.Map as Map
+import Data.Maybe
 import Data.List
 import qualified Data.Vector as V
 import Text.ParserCombinators.ReadP
@@ -267,6 +268,23 @@ defaultInitialConfig
         }
       ]
   }
+
+baseCost :: InitialConfig -> Move -> Double
+baseCost config
+  | isJust (icSourcePngPNG config) =
+      \case
+         COLOR _ _ -> 5
+         LCUT _ _ _ -> 2
+         PCUT _ _ -> 3
+         SWAP _ _ -> 3
+         MERGE _ _ -> 1
+  | otherwise =
+      \case
+         COLOR _ _ -> 5
+         LCUT _ _ _ -> 7
+         PCUT _ _ -> 10
+         SWAP _ _ -> 3
+         MERGE _ _ -> 1
 
 -- ------------------------------------------------------------------------
 
