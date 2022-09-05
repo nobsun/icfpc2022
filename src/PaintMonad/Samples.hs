@@ -125,37 +125,50 @@ sample_problem_3 = do
       green2 = (126,217,87,255)
       boxColors = [white, red, gray, yellow, purple, orange, navy, green1, green2]
 
-  let findBoxes :: Color -> Int -> [(Int, Int, Int, Int)]
-      findBoxes (r,g,b,a) eps = f [] ps
-        where
-          ps = Set.fromList
-               [ (x,y)
-               | y <- [0..imageHeight img - 1], x <- [0..imageWidth img - 1]
-               , let PixelRGBA8 r1 g1 b1 a1 = pixelAt img x y
-               , abs (fromIntegral r1 - r) < eps && abs (fromIntegral g1 - g) < eps && abs (fromIntegral b1 - b) < eps && abs (fromIntegral a1 - a) < eps
-               ]
-          f ret ps
-            | Set.null ps = ret
-            | otherwise = f (if w >= 2 && h >= 2 then (x0, y0, w, h) : ret else ret)
-                            (ps Set.\\ Set.fromList [(x,y) | x<-[x0..x1], y<-[y0..y1]])
-                where
-                  (x0,y0) = Set.findMin ps
-                  x1 = last $ x0 : takeWhile (\x' -> (x',y0) `Set.member` ps) [x0+1..]
-                  y1 = last $ y0 : takeWhile (\y' -> all (\x' -> (x',y') `Set.member` ps) [x0..x1]) [y0+1..]
-                  w = x1-x0+1
-                  h = y1-y0+1
-
-      findShapes :: Color -> Int -> [Shape]
-      findShapes color eps =
-        [Rectangle (x, imageHeight img - (y+h)) (x+w, imageHeight img - y)  | (x,y,w,h) <- findBoxes color eps]
-
   let (moves, _cnt) = genMoves defaultInitialConfig $ \[block0] -> do
         color block0 black
-        let m = forM_ boxColors $ \color -> do
-                  forM_ (findShapes color 20) $ \rect -> do
-                    bid <- get
-                    bid <- lift $ fillRect bid rect color
-                    put bid
+        let m = forM_ boxColors $ \color@(r,g,b,a) -> do
+                  let cmp (PixelRGBA8 r1 g1 b1 a1) =
+                        and
+                        [ abs (fromIntegral r1 - r) < eps
+                        , abs (fromIntegral g1 - g) < eps
+                        , abs (fromIntegral b1 - b) < eps
+                        , abs (fromIntegral a1 - a) < eps
+                        ]
+                      eps = 20
+                  forM_ (findShapes img cmp) $ \rect -> do
+                    when (shapeWidth rect >= 2 && shapeHeight rect >= 2) $ do
+                      bid <- get
+                      bid <- lift $ fillRect bid rect color
+                      put bid
         runStateT m block0
 
   return moves
+
+
+-- ------------------------------------------------------------------------
+
+findBoxes :: Image PixelRGBA8 -> (PixelRGBA8 -> Bool) -> [(Int, Int, Int, Int)]
+findBoxes img func = f [] ps
+  where
+    ps = Set.fromList
+         [ (x,y)
+         | y <- [0..imageHeight img - 1], x <- [0..imageWidth img - 1]
+         , func (pixelAt img x y)
+         ]
+    f ret ps
+      | Set.null ps = ret
+      | otherwise = f ((x0, y0, w, h) : ret)
+                      (ps Set.\\ Set.fromList [(x,y) | x<-[x0..x1], y<-[y0..y1]])
+          where
+            (x0,y0) = Set.findMin ps
+            x1 = last $ x0 : takeWhile (\x' -> (x',y0) `Set.member` ps) [x0+1..]
+            y1 = last $ y0 : takeWhile (\y' -> all (\x' -> (x',y') `Set.member` ps) [x0..x1]) [y0+1..]
+            w = x1-x0+1
+            h = y1-y0+1
+
+findShapes :: Image PixelRGBA8 -> (PixelRGBA8 -> Bool) -> [Shape]
+findShapes img func =
+  [Rectangle (x, imageHeight img - (y+h)) (x+w, imageHeight img - y)  | (x,y,w,h) <- findBoxes img func]
+
+-- ------------------------------------------------------------------------
