@@ -1,27 +1,111 @@
 module Main where
 
 import Codec.Picture
+import Codec.Picture.Types (freezeImage)
+import Control.Monad
+import Control.Monad.ST
 import Data.List
-import System.Environment
+import Options.Applicative
+import qualified Data.Vector.Unboxed.Mutable as VUM
 
-averageColor :: Image PixelRGBA8 -> PixelRGBA8
-averageColor img = p
+import EvalJuicyPixels (initializeImage)
+import Types
+
+
+data Options
+  = Options
+  { optInitialConfig :: Maybe FilePath
+  , optSourceImage :: Maybe FilePath
+  , optInput :: FilePath
+  }
+
+optionsParser :: Parser Options
+optionsParser = Options
+  <$> initialConfigOption
+  <*> sourceImageOption
+  <*> fileInput
   where
-    p = (\(r,g,b,a) -> PixelRGBA8 (round (r/n)) (round (g/n)) (round (b/n)) (round (a/n))) $
-        foldl' (\(r1,g1,b1,a1) (r2,g2,b2,a2) -> ((((,,,) $! (r1+r2)) $! (g1+g2)) $! (b1+b2)) $! (a1+a2))
-          (0 :: Double, 0 :: Double, 0 :: Double, 0 :: Double)
-          [ (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
-          | y <- [0 .. imageHeight img - 1]
-          , x <- [0 .. imageWidth img - 1]
-          , let PixelRGBA8 r g b a = pixelAt img x y
-          ]
-    n = fromIntegral (imageHeight img) * fromIntegral (imageWidth img)
+    fileInput :: Parser FilePath
+    fileInput = argument str (metavar "FILE")
+
+    initialConfigOption :: Parser (Maybe FilePath)
+    initialConfigOption = optional $ strOption
+      $  short 'c'
+      <> metavar "FILE"
+      <> help "initial config"
+      <> showDefaultWith id
+
+    sourceImageOption :: Parser (Maybe FilePath)
+    sourceImageOption = optional $ strOption
+      $  short 's'
+      <> metavar "FILE"
+      <> help "source image filename"
+      <> showDefaultWith id
+
+
+parserInfo :: ParserInfo Options
+parserInfo = info (optionsParser <**> helper)
+  $  fullDesc
+  <> header "average-color - simplest solver"
+
+
+averageColor :: Image PixelRGBA8 -> Shape -> PixelRGBA8
+averageColor img (Rectangle (x1,y1) (x2,y2)) = runST $ do
+  vec <- VUM.replicate 4 (0.0 :: Double)
+  forM_ [y1..y2-1] $ \y -> do
+    forM_ [x1..x2-1] $ \x -> do
+      let PixelRGBA8 r g b a = pixelAt img x (imageHeight img - 1 - y)
+      VUM.modify vec (+ fromIntegral r) 0
+      VUM.modify vec (+ fromIntegral g) 1
+      VUM.modify vec (+ fromIntegral b) 2
+      VUM.modify vec (+ fromIntegral a) 3
+  rSum <- VUM.read vec 0
+  gSum <- VUM.read vec 1
+  bSum <- VUM.read vec 2
+  aSum <- VUM.read vec 3
+  let n = fromIntegral ((y2 - y1) * (x2 - x1))
+      f x = round (x / n)
+  return (PixelRGBA8 (f rSum) (f gSum) (f bSum) (f aSum))
+
 
 main :: IO ()
 main = do
-  [fname] <- getArgs
-  Right dynImg <- readImage fname
-  case dynImg of
-    ImageRGBA8 img -> do
-      let PixelRGBA8 r g b a = averageColor img
-      putStrLn $ "color [0] " ++ show [r,g,b,a]
+  opt <- execParser parserInfo
+
+  Right (ImageRGBA8 img) <- readImage (optInput opt)
+
+  config <-
+    case optInitialConfig opt of
+      Nothing -> return defaultInitialConfig
+      Just fname -> loadInitialConfig fname
+
+  sourceImage <-
+    case optSourceImage opt of
+      Nothing -> return Nothing
+      Just fname -> do
+        Right (ImageRGBA8 img) <- readImage fname
+        return (Just img)
+  img0 <- freezeImage =<< initializeImage config sourceImage
+
+  forM_ (icBlocks config) $ \block -> do
+    let bid = icbBlockIdParsed block
+        shape = Rectangle (icbBottomLeft block) (icbTopRight block)
+        (x1, y1) = icbBottomLeft block
+        (x2, y2) = icbTopRight block
+        px@(PixelRGBA8 r g b a) = averageColor img shape
+        sim1, sim2 :: Double
+        sim1 = sum [ pixelDiff px0 px2
+                   | y <- [y1..y2-1], x <- [x1..x2-1]
+                   , let px0 = pixelAt img0 x (imageHeight img0 - 1 - y)
+                   , let px2 = pixelAt img x (imageHeight img - 1 - y)
+                   ]
+        sim2 = sum [pixelDiff px px2 | y <- [y1..y2-1], x <- [x1..x2-1], let px2 = pixelAt img x (imageHeight img - 1 - y)]
+        -- TODO: basic cost の変化を考慮する
+        cost :: Integer
+        cost = roundJS (5 * fromIntegral (icWidth config * icHeight config) / fromIntegral (shapeSize shape) :: Double)
+    when (fromIntegral cost <= alpha * (sim1 - sim2)) $
+      putStrLn $ dispMove $ COLOR bid (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
+
+
+alpha = 0.005
+
