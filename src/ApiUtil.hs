@@ -9,8 +9,43 @@ import System.Process (rawSystem)
 import System.Exit (ExitCode (..))
 
 import Types (InitialConfig (..), loadInitialConfig)
-import ApiJSON (Problem (..), loadProblems)
+import ApiJSON (Problem (..), loadProblems, Submission1 (..), loadSubmissions, Submission (..), loadSubmission)
 
+
+saveSubmissions :: IO ()
+saveSubmissions = do
+  let submissionList = "lists/submissions.json"
+  executeCmd "./api/update-submissions-list.sh" [submissionList]
+  saveSubmissions_ submissionList
+
+saveSubmissions_ :: FilePath -> IO ()
+saveSubmissions_ = either fail (mapM_ saveSubmission) <=< loadSubmissions
+
+saveSubmission :: Submission1 -> IO ()
+saveSubmission si1 = do
+  executeCmd "./api/save-submission-info.sh" [idstr, subInfo]
+  esi <- loadSubmission subInfo
+  either (const $ return ()) saveSubmit esi
+  return ()
+  where
+    idstr = show $ sub1_id si1
+    infoDir
+      | sub1_status si1 == "SUCCEEDED"  =  "subs"
+      | otherwise                       =  "subs" </> "err"
+    subInfo = infoDir </> idstr <.> "info" <.> "json"
+    saveSubmit si
+      | sub_id si /= sub1_id si1 =
+        putStrLn $ "submission-id inconsistent. skipping: " ++ show (sub_id si) ++ " /= " ++ show (sub1_id si1)
+      | otherwise     = do
+          saveURL (sub_file_url si) submitTXT
+          return ()
+            where
+              submitDir
+                | sub_status si == "SUCCEEDED"  =  "subs"
+                | otherwise                     =  "subs" </> "err"
+              submitTXT = submitDir </> idstr <.> "submit" <.> "txt"
+
+---
 
 saveProblems :: IO ()
 saveProblems = do
