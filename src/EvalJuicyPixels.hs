@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 module EvalJuicyPixels
   ( evalISL
   , evalISLWithCost
@@ -24,13 +25,13 @@ import Types
 type M m = ExceptT String (RWST (MutableImage (PrimState m) PixelRGBA8) (Sum Integer) (Int, Map.Map BlockId Shape) m)
 
 
-evalISL :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8)
-evalISL config moves = fmap fst $ evalISLWithCost config moves
+evalISL :: InitialConfig -> Maybe (Image PixelRGBA8) -> [Move] -> Either String (Image PixelRGBA8)
+evalISL config src moves = fmap fst $ evalISLWithCost config src moves
 
 
-evalISLWithCost :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8, Integer)
-evalISLWithCost config moves = runST $ do
-  (img, s) <- initialize config
+evalISLWithCost :: InitialConfig -> Maybe (Image PixelRGBA8) -> [Move] -> Either String (Image PixelRGBA8, Integer)
+evalISLWithCost config src moves = runST $ do
+  (img, s) <- initialize config src
   (ret, _s, cost) <- runRWST (runExceptT (mapM_ evalMoveM moves)) img s
   case ret of
     Left err -> return (Left err)
@@ -39,18 +40,26 @@ evalISLWithCost config moves = runST $ do
       return (Right (img', getSum cost))
 
 
-initialize :: PrimMonad m => InitialConfig -> m (MutableImage (PrimState m) PixelRGBA8, (Int, Map.Map BlockId Shape))
-initialize config = do
+initialize :: PrimMonad m => InitialConfig -> Maybe (Image PixelRGBA8) -> m (MutableImage (PrimState m) PixelRGBA8, (Int, Map.Map BlockId Shape))
+initialize config src = do
   img <- createMutableImage (icWidth config) (icHeight config) (PixelRGBA8 255 255 255 255)
   forM_ (icBlocks config) $ \block -> do
     let (x1,y1) = icbBottomLeft block
         (x2,y2) = icbTopRight block
-        (r,g,b,a) = icbColor block
-        px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
-    forM_ [y1..y2-1] $ \y -> do
-      forM_ [x1..x2-1] $ \x -> do
-        writePixel img x (mutableImageHeight img - 1 - y) px
-
+    if | Just (r,g,b,a) <- icbColor block -> do
+           let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
+           forM_ [y1..y2-1] $ \y -> do
+             forM_ [x1..x2-1] $ \x -> do
+               writePixel img x (mutableImageHeight img - 1 - y) px
+       | Just (x3,y3) <- icbPngBottomLeftPoint block -> do
+           case src of
+             Nothing -> error "pngBottomLeftPoint requires source image"
+             Just src' -> do
+               forM_ [y1..y2-1] $ \y -> do
+                 forM_ [x1..x2-1] $ \x -> do
+                   let px = pixelAt src' (x3 + x) (imageHeight src' - 1 - (y3 + y))
+                   writePixel img x (mutableImageHeight img - 1 - y) px
+       | otherwise -> error "no color or pngBottomLeftPoint found"
   let cnt = icCounter config
       blocks = Map.fromList [(icbBlockIdParsed block, icbShape block) | block <- icBlocks config]
 
@@ -174,14 +183,14 @@ addCost c = tell $ Sum (roundJS c)
 
 
 test = do
-  case evalISL defaultInitialConfig sampleMoves of
+  case evalISL defaultInitialConfig Nothing sampleMoves of
     Left err -> fail err
     Right img -> writePng "test.png" img
 
 
 test_similarity = do
   Right (ImageRGBA8 img1) <- readImage "probs/1.png"
-  case evalISLWithCost defaultInitialConfig sampleMoves of
+  case evalISLWithCost defaultInitialConfig Nothing sampleMoves of
     Left err -> fail err
     Right (img2, c) -> do
       print c

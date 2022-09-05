@@ -33,12 +33,12 @@ data CanvasState
 type M = ExceptT String (RWS (Int, Int) (Sum Integer) CanvasState)
 
 
-evalISL :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8)
-evalISL config moves = fmap fst $ evalISLWithCost config moves
+evalISL :: InitialConfig -> Maybe (Image PixelRGBA8) -> [Move] -> Either String (Image PixelRGBA8)
+evalISL config src moves = fmap fst $ evalISLWithCost config src moves
 
 
-evalISLWithCost :: InitialConfig -> [Move] -> Either String (Image PixelRGBA8, Integer)
-evalISLWithCost config moves = do
+evalISLWithCost :: InitialConfig -> Maybe (Image PixelRGBA8) -> [Move] -> Either String (Image PixelRGBA8, Integer)
+evalISLWithCost config src moves = do
   case runRWS (runExceptT (mapM_ evalMoveM moves)) (icWidth config, icHeight config) (initialState config) of
     (ret, CanvasState _ blocks, cost) -> do
       _ <- ret
@@ -51,10 +51,11 @@ initialState config =
   { canvasCounter = icCounter config
   , canvasBlocks =
       Map.fromList
-      [ (icbBlockIdParsed block, (icbBottomLeft block, Fill (x1-x0) (y1-y0) (icbColor block)))
+      [ (icbBlockIdParsed block, (icbBottomLeft block, maybe noColor (Fill (x1-x0) (y1-y0)) $ icbColor block))
       | block <- icBlocks config
       , let (x0,y0) = icbBottomLeft block
       , let (x1,y1) = icbTopRight block
+      , let noColor = error "EvalContent.initialState: icbPngBottomLeftPoint not implemented"
       ]
   }
 
@@ -63,7 +64,7 @@ renderBlocks :: Int -> Int -> Map.Map BlockId (Point, Content) -> Image PixelRGB
 renderBlocks w h blocks = runST $ do
   img <- createMutableImage w h (PixelRGBA8 255 255 255 255)
   forM_ (Map.elems blocks) $ \((x,y), content) -> renderContentM img x y content
-  unsafeFreezeImage img  
+  unsafeFreezeImage img
 
 
 evalMove :: Int -> Int -> Move -> CanvasState -> Either String (CanvasState, Integer)
@@ -172,14 +173,14 @@ addCost c = tell $ Sum (roundJS c)
 
 
 test = do
-  case evalISL defaultInitialConfig sampleMoves of
+  case evalISL defaultInitialConfig Nothing sampleMoves of
     Left err -> fail err
     Right img -> writePng "test.png" img
 
 
 test_similarity = do
   Right (ImageRGBA8 img1) <- readImage "probs/1.png"
-  case evalISLWithCost defaultInitialConfig sampleMoves of
+  case evalISLWithCost defaultInitialConfig Nothing sampleMoves of
     Left err -> fail err
     Right (img2, c) -> do
       print c
@@ -187,4 +188,3 @@ test_similarity = do
       print $ similarity img2 img2 == 0
       print (similarity img1 img2)
       print $ similarity img1 img2 + c
-

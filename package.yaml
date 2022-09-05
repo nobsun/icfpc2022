@@ -30,6 +30,7 @@ library:
   dependencies:
   - bytestring
   - filepath
+  - directory
   - process
   - time
   - aeson

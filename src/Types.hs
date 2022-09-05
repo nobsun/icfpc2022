@@ -193,6 +193,8 @@ data InitialConfig
   = InitialConfig
   { icWidth :: !Int
   , icHeight :: !Int
+  , icSourcePngJSON :: Maybe String
+  , icSourcePngPNG ::Maybe String
   , icBlocks :: [ICBlock]
   }
   deriving (Show, Generic)
@@ -214,7 +216,8 @@ data ICBlock
   { icbBlockId :: String
   , icbBottomLeft :: Point
   , icbTopRight :: Point
-  , icbColor :: Color
+  , icbColor :: Maybe Color
+  , icbPngBottomLeftPoint :: Maybe Point
   }
   deriving (Show, Generic)
 
@@ -238,22 +241,25 @@ icbShape block = Rectangle (icbBottomLeft block) (icbTopRight block)
 
 loadInitialConfig :: FilePath -> IO InitialConfig
 loadInitialConfig fname = do
-  ret <- JSON.decodeFileStrict' fname
+  ret <- JSON.eitherDecodeFileStrict' fname
   case ret of
-    Just ic -> return ic
-    Nothing -> fail "fail to parse initial configuration"
+    Right ic -> return ic
+    Left em  -> fail $ "fail to parse initial configuration: " ++ em
 
 defaultInitialConfig :: InitialConfig
 defaultInitialConfig
   = InitialConfig
   { icWidth = 400
   , icHeight = 400
+  , icSourcePngJSON = Nothing
+  , icSourcePngPNG = Nothing
   , icBlocks =
       [ ICBlock
         { icbBlockId = "0"
         , icbBottomLeft = (0, 0)
         , icbTopRight = (400, 400)
-        , icbColor = (255, 255, 255, 255)
+        , icbColor = Just (255, 255, 255, 255)
+        , icbPngBottomLeftPoint = Nothing
         }
       ]
   }

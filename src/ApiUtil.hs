@@ -1,12 +1,14 @@
 
 module ApiUtil where
 
-import Control.Monad ((<=<))
+import Control.Monad ((<=<), when)
 import Data.List (isPrefixOf)
-import System.FilePath ((</>), (<.>))
+import System.FilePath ((</>), (<.>), takeFileName)
+import System.Directory (doesFileExist)
 import System.Process (rawSystem)
 import System.Exit (ExitCode (..))
 
+import Types (InitialConfig (..), loadInitialConfig)
 import ApiJSON (Problem (..), loadProblems)
 
 
@@ -23,12 +25,21 @@ saveProblem problem = do
   saveField prob_initial_config_link configJSON
   saveField prob_canvas_link canvasPNG
   saveField prob_target_link targetPNG
+  saveSrc
   where
     name = show $ prob_id problem
     configJSON = "probs" </> "ini" </> name <.> "initial" <.> "json"
     canvasPNG = "probs" </> "ini" </> name <.> "initial" <.> "png"
     targetPNG = "probs" </> name <.> "png"
     saveField f out = saveURL (f problem) out
+    srcPrefix = "probs" </> "ini" </> "src"
+    saveSrcURL url = saveURL url $ srcPrefix </> takeFileName url
+    saveSrc = do
+      existConfig <- doesFileExist configJSON
+      when existConfig $ do
+        ic <- loadInitialConfig configJSON
+        maybe (return ()) saveSrcURL $ icSourcePngJSON ic
+        maybe (return ()) saveSrcURL $ icSourcePngPNG ic
 
 ---
 
