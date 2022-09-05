@@ -10,27 +10,27 @@ import Control.Monad.State.Lazy
 import Data.Foldable (foldlM)
 import qualified Data.Map.Lazy as Map
 
-import Debug.Trace
-
 import Oga
 
+--import Debug.Trace
+--f $$ x = traceShow x (f x)
 
+
+distance :: PixelRGBA8 -> PixelRGBA8 -> Int
 distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
-  ((f r1)-(f r2))^2 + ((f g1)-(f g2))^2 + ((f b1)-(f b2))^2
-  where
-    f = fromIntegral
+  sum[((fromIntegral x)-(fromIntegral y))^2 | (x,y)<-[(r1,r2),(g1,g2),(b1,b2),(a1,a2)]]
 
 ------------------------------------------------
 
 layerS :: Int -> Image PixelRGBA8 -> [Int] -> Int -> BState ()
-layerS threshold img bid 0 = return ()
+layerS threshold img bid (-1) = return ()
 layerS threshold img bid y = do
   B{bBlocks=bBlocks,bImage=bimg} <- get
   let ((bx,by),(tx,ty)) = bBlocks Map.! bid
   bid' <- foldlM (\bid' x -> do
       let color1 = pixelAt img x (399-y)
-      color2 <- readPixel bimg x y
-      if distance color1 color2 > threshold then paint bid' x color1 else return bid'
+      color2 <- readPixel bimg x (399-y)
+      if distance color1 color2 > (400`div`(y+1))*threshold then paint bid' x color1 else return bid'
     ) bid [bx..tx]
   programLineS(Move (LCutMove (BlockId bid') Horizontal (LineNumber y)))
   layerS threshold img (0:bid') (y-1)

@@ -114,11 +114,11 @@ moveS (LCutMove (BlockId bid) Horizontal (LineNumber y)) = do
 
 moveS (ColorMove (BlockId bid) (Color r g b a)) = do
   B{bBlocks=bBlocks, bOrder=bOrder, bPaints=bPaints, bImage=bImage} <- get
-  let (bl,tr) = bBlocks Map.! bid
+  let (bl,tr@(tx,ty)) = bBlocks Map.! bid
       paint = Paint{pBlock=(bl,tr),pColor=(r,g,b,a),pBid=bid,pOrder=bOrder}
       pix = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
   -- update image
-  sequence_[writePixel bImage i j pix | (i,j)<-range(bl,tr) ]
+  sequence_[writePixel bImage i (399-j) pix | (i,j)<-range(bl,tr) ]
   modify (\b-> b{bOrder=(bOrder+1), bPaints=Map.insert bid paint bPaints})
 
 
