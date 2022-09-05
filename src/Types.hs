@@ -296,8 +296,10 @@ similarity img1 img2 = assert (imageWidth img1 == imageWidth img2 && imageHeight
     , x <- [0 .. imageWidth img1 - 1]
     , let p1 = pixelAt img1 x y, let p2 = pixelAt img2 x y
     ]
-  where
-    alpha = 0.005
+
+
+alpha :: Double
+alpha = 0.005
 
 
 pixelDiff :: PixelRGBA8 -> PixelRGBA8 -> Double

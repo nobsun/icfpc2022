@@ -110,5 +110,4 @@ main = do
     when (fromIntegral cost <= alpha * (sim1 - sim2)) $
       putStrLn $ dispMove move
 
-alpha = 0.005
 
