@@ -1,0 +1,9 @@
+{
+  "id": 33372,
+  "problem_id": 19,
+  "submitted_at": "2022-09-04T12:26:13.876137Z",
+  "status": "FAILED",
+  "cost": 0,
+  "error": "Block size cannot be 0!",
+  "file_url": "https://minivinci-submissions.s3.amazonaws.com/user247_problem_19_6a381c2f-20c0-41d1-a027-b1535ed42c30.isl?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA35VZNBCZRCI77IEN%2F20220905%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220905T071956Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=b9506fb540c025ef6d1966063d631ad21d7ff40bde624016032a79625af8ce31"
+}

@@ -1,0 +1,9 @@
+{
+  "id": 65534,
+  "problem_id": 26,
+  "submitted_at": "2022-09-05T11:33:46.865064Z",
+  "status": "SUCCEEDED",
+  "cost": 52694,
+  "error": "",
+  "file_url": "https://minivinci-submissions.s3.amazonaws.com/user247_problem_26_46c6b0d9-d17c-45c8-be15-d75357f25275.isl?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA35VZNBCZRCI77IEN%2F20220905%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220905T114043Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=c2144fc0a2460eb73f0ff494b6a2c2f9fb3f4ec9e981e0414418a3e408193005"
+}
