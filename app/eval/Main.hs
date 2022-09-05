@@ -2,6 +2,9 @@ module Main where
 
 import Codec.Picture
 import Control.Monad
+import qualified Data.Aeson as J
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 import Options.Applicative
 
 import qualified EvalContent
@@ -16,6 +19,7 @@ data Options
   , optSourceImage :: Maybe FilePath
   , optTarget :: Maybe FilePath
   , optEvalEngine :: String
+  , optDumpResult :: Maybe FilePath
   , optInput :: FilePath
   }
 
@@ -26,6 +30,7 @@ optionsParser = Options
   <*> sourceImageOption
   <*> targetOption
   <*> evalEngineOption
+  <*> dumpResultOption
   <*> fileInput
   where
     fileInput :: Parser FilePath
@@ -66,6 +71,13 @@ optionsParser = Options
       <> help "evaluation engine name: \"content\" or default engine"
       <> value ""
       <> showDefault
+
+    dumpResultOption :: Parser (Maybe FilePath)
+    dumpResultOption = optional $ strOption
+      $  long "dump-result"
+      <> metavar "FILE"
+      <> help "output scores in JSON"
+      <> showDefaultWith id
 
 
 parserInfo :: ParserInfo Options
@@ -124,3 +136,12 @@ main = do
   case optOutput opt of
     Nothing -> return ()
     Just fname -> writePng fname img
+
+  case optDumpResult opt of
+    Nothing -> return ()
+    Just fname -> do
+      let dict =
+            case targetImage of
+              Nothing -> Map.fromList [("code", cost), ("total", cost + sim)]
+              Just _ -> Map.fromList [("code", cost), ("similarity", sim), ("total", cost + sim)]
+      J.encodeFile fname dict

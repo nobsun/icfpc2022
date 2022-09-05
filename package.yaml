@@ -104,6 +104,7 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+    - aeson
     - optparse-applicative
   compare-image:
     main:                Main.hs

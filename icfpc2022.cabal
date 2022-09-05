@@ -114,6 +114,7 @@ executable eval
   ghc-options: -rtsopts
   build-depends:
       JuicyPixels
+    , aeson
     , base >=4.7 && <5
     , containers
     , icfpc2022
