@@ -51,7 +51,11 @@ initialState config =
   { canvasCounter = icCounter config
   , canvasBlocks =
       Map.fromList
-      [ (icbBlockIdParsed block, (icbBottomLeft block, Fill (x1-x0) (y1-y0) (icbColor block)))
+      [ ( icbBlockIdParsed block
+        , case icbColor block of
+            Nothing -> error "pngBottomLeftPoint is not supported yet"
+            Just c -> (icbBottomLeft block, Fill (x1-x0) (y1-y0) c)
+        )
       | block <- icBlocks config
       , let (x0,y0) = icbBottomLeft block
       , let (x1,y1) = icbTopRight block

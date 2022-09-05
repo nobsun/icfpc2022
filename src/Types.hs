@@ -194,6 +194,8 @@ data InitialConfig
   { icWidth :: !Int
   , icHeight :: !Int
   , icBlocks :: [ICBlock]
+  , icSourcePngJSON :: Maybe String
+  , icSourcePngPNG :: Maybe String
   }
   deriving (Show, Generic)
 
@@ -214,7 +216,8 @@ data ICBlock
   { icbBlockId :: String
   , icbBottomLeft :: Point
   , icbTopRight :: Point
-  , icbColor :: Color
+  , icbColor :: Maybe Color
+  , icbPngBottomLeftPoint :: Maybe Point
   }
   deriving (Show, Generic)
 
@@ -253,9 +256,12 @@ defaultInitialConfig
         { icbBlockId = "0"
         , icbBottomLeft = (0, 0)
         , icbTopRight = (400, 400)
-        , icbColor = (255, 255, 255, 255)
+        , icbColor = Just (255, 255, 255, 255)
+        , icbPngBottomLeftPoint = Nothing
         }
       ]
+  , icSourcePngJSON = Nothing
+  , icSourcePngPNG = Nothing
   }
 
 -- ------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiWayIf #-}
 module EvalJuicyPixels
   ( evalISL
   , evalISLWithCost
@@ -45,12 +46,13 @@ initialize config = do
   forM_ (icBlocks config) $ \block -> do
     let (x1,y1) = icbBottomLeft block
         (x2,y2) = icbTopRight block
-        (r,g,b,a) = icbColor block
-        px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
-    forM_ [y1..y2-1] $ \y -> do
-      forM_ [x1..x2-1] $ \x -> do
-        writePixel img x (mutableImageHeight img - 1 - y) px
-
+    if | Just (r,g,b,a) <- icbColor block -> do
+           let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
+           forM_ [y1..y2-1] $ \y -> do
+             forM_ [x1..x2-1] $ \x -> do
+               writePixel img x (mutableImageHeight img - 1 - y) px
+       | Just _ <- icbPngBottomLeftPoint block -> do
+           error "pngBottomLeftPoint is not supported yet"
   let cnt = icCounter config
       blocks = Map.fromList [(icbBlockIdParsed block, icbShape block) | block <- icBlocks config]
 
