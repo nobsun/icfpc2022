@@ -51,10 +51,10 @@ initialize config = do
       forM_ [x1..x2-1] $ \x -> do
         writePixel img x (mutableImageHeight img - 1 - y) px
 
-  let cnt = length (icBlocks config) - 1
+  let cnt = icCounter config
       blocks =
         Map.fromList
-        [ (V.singleton (read (icbBlockId block)), Rectangle (icbBottomLeft block) (icbTopRight block))
+        [ (icbBlockIdParsed block, Rectangle (icbBottomLeft block) (icbTopRight block))
         | block <- icBlocks config
         ]
 
@@ -152,12 +152,9 @@ evalMoveM move@(MERGE bid1 bid2) = do
   let blocks' = Map.delete bid1 $ Map.delete bid2 blocks
       cnt' = cnt + 1
       bid3 = V.singleton cnt'
-  if x1 == x2 && shapeWidth shape1 == shapeWidth shape2 && (y1' == y2 || y2' == y1) then do
-    put (cnt', Map.insert bid3 (Rectangle (x1, min y1 y2) (x1', max y1' y2')) blocks')
-  else if y1 == y2 && shapeHeight shape1 == shapeHeight shape2 && (x1' == x2 || x2' == x1) then do
-    put (cnt', Map.insert bid3 (Rectangle (min x1 x2, y1) (max x1' x2', y1')) blocks')
-  else do
-    throwError ("invalid move (" ++ dispMove move ++ ")")
+  case mergeShape shape1 shape2 of
+    Nothing -> throwError ("invalid move (" ++ dispMove move ++ ")")
+    Just shape3 -> put (cnt', Map.insert bid3 shape3 blocks')
   canvasSize <- getCanvasSize
   addCost $ 1 * canvasSize / fromIntegral (max (shapeSize shape1) (shapeSize shape2))
 

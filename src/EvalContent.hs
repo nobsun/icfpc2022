@@ -48,10 +48,10 @@ evalISLWithCost config moves = do
 initialState :: InitialConfig -> CanvasState
 initialState config =
   CanvasState
-  { canvasCounter = length (icBlocks config) - 1
+  { canvasCounter = icCounter config
   , canvasBlocks =
       Map.fromList
-      [ (V.singleton (read (icbBlockId block)), (icbBottomLeft block, Fill (x1-x0) (y1-y0) (icbColor block)))
+      [ (icbBlockIdParsed block, (icbBottomLeft block, Fill (x1-x0) (y1-y0) (icbColor block)))
       | block <- icBlocks config
       , let (x0,y0) = icbBottomLeft block
       , let (x1,y1) = icbTopRight block
