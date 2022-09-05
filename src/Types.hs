@@ -238,10 +238,10 @@ icbShape block = Rectangle (icbBottomLeft block) (icbTopRight block)
 
 loadInitialConfig :: FilePath -> IO InitialConfig
 loadInitialConfig fname = do
-  ret <- JSON.decodeFileStrict' fname
+  ret <- JSON.eitherDecodeFileStrict' fname
   case ret of
-    Just ic -> return ic
-    Nothing -> fail "fail to parse initial configuration"
+    Right ic -> return ic
+    Left em  -> fail $ "fail to parse initial configuration: " ++ em
 
 defaultInitialConfig :: InitialConfig
 defaultInitialConfig
