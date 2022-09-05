@@ -2,7 +2,37 @@ module Main where
 
 import Codec.Picture
 import Data.List
+import Options.Applicative
 import System.Environment
+
+
+data Options
+  = Options
+  { optInitialConfig :: Maybe FilePath
+  , optInput :: FilePath
+  }
+
+optionsParser :: Parser Options
+optionsParser = Options
+  <$> initialConfigOption
+  <*> fileInput
+  where
+    fileInput :: Parser FilePath
+    fileInput = argument str (metavar "FILE")
+
+    initialConfigOption :: Parser (Maybe FilePath)
+    initialConfigOption = optional $ strOption
+      $  short 'c'
+      <> metavar "FILE"
+      <> help "initial config"
+      <> showDefaultWith id
+
+
+parserInfo :: ParserInfo Options
+parserInfo = info (optionsParser <**> helper)
+  $  fullDesc
+  <> header "average-color - simplest solver"
+
 
 averageColor :: Image PixelRGBA8 -> PixelRGBA8
 averageColor img = p
@@ -17,11 +47,11 @@ averageColor img = p
           ]
     n = fromIntegral (imageHeight img) * fromIntegral (imageWidth img)
 
+
 main :: IO ()
 main = do
-  [fname] <- getArgs
-  Right dynImg <- readImage fname
-  case dynImg of
-    ImageRGBA8 img -> do
-      let PixelRGBA8 r g b a = averageColor img
-      putStrLn $ "color [0] " ++ show [r,g,b,a]
+  opt <- execParser parserInfo
+
+  Right (ImageRGBA8 img) <- readImage (optInput opt)
+  let PixelRGBA8 r g b a = averageColor img
+  putStrLn $ "color [0] " ++ show [r,g,b,a]
