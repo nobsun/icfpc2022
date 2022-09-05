@@ -74,6 +74,20 @@ executable average-color
     , mtl
   default-language: Haskell2010
 
+executable check-with-submissions
+  main-is: check-with-submissions.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      api-util
+  build-depends:
+      JuicyPixels
+    , base >=4.7 && <5
+    , containers
+    , icfpc2022
+    , mtl
+  default-language: Haskell2010
+
 executable compare-image
   main-is: Main.hs
   other-modules:
