@@ -7,8 +7,10 @@ import Data.Maybe
 import qualified Data.Map as Map
 import qualified Data.Vector as V
 import qualified Graphics.Gloss as Gloss
-import qualified Graphics.Gloss.Data.Bitmap as Gloss
+import qualified Graphics.Gloss.Juicy as GlossJ
 import Types
+
+import Debug.Trace
 
 type BitmapData = Gloss.BitmapData
 type Canvas = Shape
@@ -63,7 +65,7 @@ initializeWorld can is
     , prog = is
     , counter = 1
     , blocks = Map.singleton (V.singleton 0)
-                 (SimpleBlock can white)
+                 (SimpleBlock can gray)
     , costs  = 0
     }
 
@@ -72,7 +74,9 @@ initialWorld = initializeWorld (Rectangle (0,0) (400,400)) []
 
 white :: Color
 white = (255,255,255,255)
-red, green, blue :: Color
+
+gray, red, green, blue :: Color
+gray = (0,0,0,0)
 red  = (255,0,0,255)
 green = (0,255,0,255)
 blue  = (0,0,255,255)
@@ -107,10 +111,13 @@ toGlossColor :: Color -> Gloss.Color
 toGlossColor = \ case
     (r,g,b,a) -> Gloss.makeColorI r g b a
 
-glossDisplayWorld :: World -> IO ()
-glossDisplayWorld world 
-    = Gloss.display window Gloss.white
+glossDisplayWorld :: Maybe FilePath -> World -> IO ()
+glossDisplayWorld mf world 
+    = do
+    { img <- maybe (return $ Just Gloss.blank) GlossJ.loadJuicy mf
+    ; Gloss.display window Gloss.white $ (fromJust img <>)
     $ Gloss.translate dx dy $ foldr1 (<>) $ map blockToGlossPicture $ Map.elems $ blocks world
+    }
     where
         window = Gloss.FullScreen
         can   = canvas world
