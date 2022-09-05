@@ -43,50 +43,50 @@ dispBlock = \ case
     SimpleBlock  shp col -> show shp ++ " " ++ dispColor col ++ " size: " ++ show (shapeSize shp)
     ComplexBlock shp bs  -> show shp ++ " [" ++ intercalate ", " (map dispBlock bs) ++ "]"
 
-data World
-    = World
-    { canvas      :: Shape
-    , prog        :: [Instruction]
-    , counter     :: Int
-    , blocks      :: BlockTable
-    , pict        :: Gloss.Picture
-    , costs       :: !Int
-    }
+-- data World
+--     = World
+--     { canvas      :: Shape
+--     , prog        :: [Instruction]
+--     , counter     :: Int
+--     , blocks      :: BlockTable
+--     , pict        :: Gloss.Picture
+--     , costs       :: !Int
+--     }
 
-instance Show World where
-    show w = case w of
-        World { blocks = tbl }
-            -> unlines (map (dispBlockEntry tbl) (Map.assocs tbl))
+-- instance Show World where
+--     show w = case w of
+--         World { blocks = tbl }
+--             -> unlines (map (dispBlockEntry tbl) (Map.assocs tbl))
 
-initializeWorld :: Canvas -> [Instruction] -> World
-initializeWorld can is
-    = World
-    { canvas = can
-    , prog = is
-    , counter = 1
-    , blocks = Map.singleton (V.singleton 0)
-                 (SimpleBlock can white)
-    , costs  = 0
-    }
+-- initializeWorld :: Canvas -> [Instruction] -> World
+-- initializeWorld can is
+--     = World
+--     { canvas = can
+--     , prog = is
+--     , counter = 1
+--     , blocks = Map.singleton (V.singleton 0)
+--                  (SimpleBlock can white)
+--     , costs  = 0
+--     }
 
-initialWorld :: World
-initialWorld = initializeWorld (Rectangle (0,0) (400,400)) []
+-- initialWorld :: World
+-- initialWorld = initializeWorld (Rectangle (0,0) (400,400)) []
 
-white :: Color
-white = (255,255,255,255)
+-- white :: Color
+-- white = (255,255,255,255)
 
-gray, red, green, blue :: Color
-gray = (0,0,0,0)
-red  = (255,0,0,255)
-green = (0,255,0,255)
-blue  = (0,0,255,255)
+-- gray, red, green, blue :: Color
+-- gray = (0,0,0,0)
+-- red  = (255,0,0,255)
+-- green = (0,255,0,255)
+-- blue  = (0,0,255,255)
 
-incCount :: World -> (Int, World)
-incCount world = (cnt, world { counter = succ cnt })
-    where
-        cnt = counter world
+-- incCount :: World -> (Int, World)
+-- incCount world = (cnt, world { counter = succ cnt })
+--     where
+--         cnt = counter world
 
-type Instruction = World -> World
+-- type Instruction = World -> World
 
 --
 
@@ -110,17 +110,3 @@ halve = (`div` 2)
 toGlossColor :: Color -> Gloss.Color
 toGlossColor = \ case
     (r,g,b,a) -> Gloss.makeColorI r g b a
-
-glossDisplayWorld :: Maybe FilePath -> World -> IO ()
-glossDisplayWorld mf world 
-    = do
-    { img <- maybe (return $ Just Gloss.blank) GlossJ.loadJuicy mf
-    ; Gloss.display window Gloss.white $ (fromJust img <>)
-    $ Gloss.translate dx dy $ foldr1 (<>) $ map blockToGlossPicture $ Map.elems $ blocks world
-    }
-    where
-        window = Gloss.FullScreen
-        can   = canvas world
-        (dx,dy) = ( fromIntegral $ negate $ halve $ shapeWidth can
-                  , fromIntegral $ negate $ halve $ shapeHeight can
-                  )

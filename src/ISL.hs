@@ -8,9 +8,11 @@ import qualified Data.Map as Map
 import Data.List
 import Data.Maybe
 import qualified Data.Vector.Generic as V
+import Text.ParserCombinators.ReadP
+
 import Types
 import Block
-import Text.ParserCombinators.ReadP
+import World
 
 import Debug.Trace
 
@@ -217,8 +219,4 @@ isFinal :: World -> Bool
 isFinal = \ case
     World { prog = is } -> null is
 
-initCanvas :: Canvas
-initCanvas = Rectangle (0,0) (400,400)
 
-world0 :: World
-world0 = initializeWorld initCanvas (map interp sampleMoves)
