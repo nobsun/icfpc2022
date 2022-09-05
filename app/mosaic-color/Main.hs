@@ -2,7 +2,7 @@ module Main where
 
 import Codec.Picture
 import Codec.Picture.Types
-import Data.List (foldl')
+import Data.List (foldl', transpose)
 import System.Environment
 
 import Control.Monad.State.Lazy
@@ -18,6 +18,24 @@ distance :: PixelRGBA8 -> PixelRGBA8 -> Int
 distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
   sum[((fromIntegral x)-(fromIntegral y))^2 | (x,y)<-[(r1,r2),(g1,g2),(b1,b2),(a1,a2)]]
 
+
+pixelBoxAt :: (Int,Int) -> Int -> Image PixelRGBA8 -> [[Int]]
+pixelBoxAt (x,y) size img =
+  transpose $ map h [pixelAt img i (399-j)| i<-[x..x+size-1], j<-[y..y+size-1]]
+  where
+    h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
+
+
+leastSquare :: [Int] -> Int
+leastSquare xs =
+  if 0 <= center && center <= 255 then center
+   else if 255^2 -b*255 > 0 then 0
+        else 255
+  where
+    center = round $ -b/(2*a)
+    a = fromIntegral $ length xs
+    b = fromIntegral $ -2*(sum xs)
+
 ------------------------------------------------
 
 -- できるだけpcutよりもlcutを使うようにしてみたがイマイチ
@@ -26,10 +44,10 @@ mosaic2S depth img bid = do
   B{bBlocks=bBlocks} <- get
   let ((bx,by),(tx,ty)) = bBlocks Map.! bid
       (mx,my) = ((bx+tx)`div`2, (by+ty)`div`2)
-      dbx = distance (pixelAt img bx by) (pixelAt img tx by)
-      dtx = distance (pixelAt img tx ty) (pixelAt img bx ty)
-      dby = distance (pixelAt img bx by) (pixelAt img bx ty)
-      dty = distance (pixelAt img tx ty) (pixelAt img tx by)
+      dbx = distance (pixelAt img bx (399-by)) (pixelAt img tx (399-by))
+      dtx = distance (pixelAt img tx (399-ty)) (pixelAt img bx (399-ty))
+      dby = distance (pixelAt img bx (399-by)) (pixelAt img bx (399-ty))
+      dty = distance (pixelAt img tx (399-ty)) (pixelAt img tx (399-by))
       vcut = depth>0 && mx/=bx && mx/=tx && (depth>7 || dbx > th || dtx > th)
       hcut = depth>0 && my/=by && my/=ty && (depth>7 || dby > th || dty > th)
   case (vcut, hcut) of
@@ -43,8 +61,8 @@ mosaic2S depth img bid = do
         programLineS (Move (LCutMove (BlockId bid) Horizontal (LineNumber my)))
         mapM_ (mosaic2S (depth-1) img) [0:bid, 1:bid]
     _ -> do
-        let PixelRGBA8 r g b a = averageColor (bx,by) (tx,ty) img
-        programLineS (Move (ColorMove (BlockId bid) (Color (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a))))
+        let [r, g, b] = map leastSquare $ pixelBoxAt (bx,by) (tx-bx+1) img
+        programLineS (Move (ColorMove (BlockId bid) (Color (fromIntegral r) (fromIntegral g) (fromIntegral b) 255)))
   where
     th = 20000
 
@@ -55,9 +73,9 @@ mosaic2S depth img bid = do
 mosaicS :: Int -> Image PixelRGBA8 -> [Int] -> BState ()
 mosaicS 0 img bid = do
   B{bBlocks=bBlocks} <- get
-  let (bl,tr) = bBlocks Map.! bid
-      PixelRGBA8 r g b a = averageColor bl tr img
-  programLineS (Move (ColorMove (BlockId bid) (Color (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a))))
+  let ((bx,by),(tx,ty)) = bBlocks Map.! bid
+      [r,g,b] = map leastSquare $ pixelBoxAt (bx,by) (tx-bx+1) img
+  programLineS (Move (ColorMove (BlockId bid) (Color (fromIntegral r) (fromIntegral g) (fromIntegral b) 255)))
 
 mosaicS depth img bid = do
   B{bBlocks=bBlocks} <- get
@@ -67,29 +85,15 @@ mosaicS depth img bid = do
   mapM_ (mosaicS (depth-1) img) [0:bid, 1:bid, 2:bid, 3:bid]
 
 
-averageColor :: (Int,Int) -> (Int,Int) -> Image PixelRGBA8 -> PixelRGBA8
-averageColor (bx,by) (tx,ty) img = p
-  where
-    p = (\(n,r,g,b,a) -> PixelRGBA8 (round (r/n)) (round (g/n)) (round (b/n)) (round (a/n))) $
-        foldl' (\(n1,r1,g1,b1,a1) (n2,r2,g2,b2,a2) -> ((((((,,,,) $! (n1+n2)) $! (r1+r2)) $! (g1+g2)) $! (b1+b2)) $! (a1+a2)))
-          (0 :: Double, 0 :: Double, 0 :: Double, 0 :: Double, 0 :: Double)
-          [ (1, fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
-          | y <- [h-ty .. h-by]
-          , x <- [bx .. tx]
-          , let PixelRGBA8 r g b a = pixelAt img x y
-          ]
-    h = (imageHeight img) - 1
-
-
 ------------------------------------
 
 main :: IO ()
 main = do
-  [fname] <- getArgs
+  [n,fname] <- getArgs
   Right dynImg <- readImage fname
   case dynImg of
     ImageRGBA8 img -> do
-      s <- execStateT (initS >> mosaicS 6 img [0]) initialBlock
+      s <- execStateT (initS >> mosaicS (read n) img [0]) initialBlock
 --      s <- execStateT (initS >> mosaic2S 10 img [0]) initialBlock
       mapM_ print $ reverse $ bHistory s
       rawImage <- freezeImage $ bImage s
