@@ -4,6 +4,7 @@ module PaintMonad.Samples
   ( sample_problem_1
   , sample_problem_2
   , sample_problem_3
+  , sample_problem_4
   ) where
 
 import Codec.Picture
@@ -136,6 +137,34 @@ sample_problem_3 = do
                         , abs (fromIntegral a1 - a) < eps
                         ]
                       eps = 20
+                  forM_ (findShapes img cmp) $ \rect -> do
+                    when (shapeWidth rect >= 2 && shapeHeight rect >= 2) $ do
+                      bid <- get
+                      bid <- lift $ fillRect bid rect color
+                      put bid
+        runStateT m block0
+
+  return moves
+
+
+
+-- saveISL "solution/human_4.isl" =<< sample_problem_4
+sample_problem_4 :: IO [Move]
+sample_problem_4 = do
+  Right (ImageRGBA8 img) <- readImage "probs/4.png"
+  let black = (0,0,0,255)
+      boxColors = [black]
+
+  let (moves, _cnt) = genMoves defaultInitialConfig $ \[block0] -> do
+        let m = forM_ boxColors $ \color@(r,g,b,a) -> do
+                  let cmp (PixelRGBA8 r1 g1 b1 a1) =
+                        and
+                        [ abs (fromIntegral r1 - r) < eps
+                        , abs (fromIntegral g1 - g) < eps
+                        , abs (fromIntegral b1 - b) < eps
+                        , abs (fromIntegral a1 - a) < eps
+                        ]
+                      eps = 128
                   forM_ (findShapes img cmp) $ \rect -> do
                     when (shapeWidth rect >= 2 && shapeHeight rect >= 2) $ do
                       bid <- get
