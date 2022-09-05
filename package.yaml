@@ -108,6 +108,12 @@ executables:
     dependencies:
     - icfpc2022
     - optparse-applicative
+  gloss-display:
+    main:                Main.hs
+    source-dirs:         app/gloss
+    dependencies:
+    - icfpc2022
+    # - gloss
 
 tests:
   icfpc2022-test:

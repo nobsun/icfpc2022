@@ -57,14 +57,13 @@ instance Show World where
             -> unlines (map (dispBlockEntry tbl) (Map.assocs tbl))
 
 initializeWorld :: Canvas -> [Instruction] -> World
-initializeWorld cvs is
+initializeWorld can is
     = World
-    { canvas = cvs
+    { canvas = can
     , prog = is
     , counter = 1
     , blocks = Map.singleton (V.singleton 0)
-                 (SimpleBlock (Rectangle (0,0) (400, 400)) white)
-    , pict   = undefined
+                 (SimpleBlock can white)
     , costs  = 0
     }
 
@@ -85,3 +84,36 @@ incCount world = (cnt, world { counter = succ cnt })
 
 type Instruction = World -> World
 
+--
+
+blockToGlossPicture :: Block -> Gloss.Picture 
+blockToGlossPicture = \ case
+    SimpleBlock shp col -> Gloss.color (toGlossColor col) $ shapeToGlossPicture shp
+    ComplexBlock shp bs -> foldr1 (<>) (map blockToGlossPicture bs)
+
+shapeToGlossPicture :: Shape -> Gloss.Picture
+shapeToGlossPicture shp = case (leftBottom shp, shapeWidth shp, shapeHeight shp) of
+    ((x0, y0), w, h) -> Gloss.translate dx dy $ Gloss.rectangleSolid fw fh
+        where
+            dx = fromIntegral $ x0 + halve w
+            dy = fromIntegral $ y0 + halve h
+            fw = fromIntegral w
+            fh = fromIntegral h
+
+halve :: (Integral a) => a -> a
+halve = (`div` 2)
+
+toGlossColor :: Color -> Gloss.Color
+toGlossColor = \ case
+    (r,g,b,a) -> Gloss.makeColorI r g b a
+
+glossDisplayWorld :: World -> IO ()
+glossDisplayWorld world 
+    = Gloss.display window Gloss.white
+    $ Gloss.translate dx dy $ foldr1 (<>) $ map blockToGlossPicture $ Map.elems $ blocks world
+    where
+        window = Gloss.FullScreen
+        can   = canvas world
+        (dx,dy) = ( fromIntegral $ negate $ halve $ shapeWidth can
+                  , fromIntegral $ negate $ halve $ shapeHeight can
+                  )

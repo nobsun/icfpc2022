@@ -1,10 +1,8 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.7.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 9495ccf78bd788c02236a1784546f1764c03d882bfed6de746afefc0e0635503
 
 name:           icfpc2022
 version:        0.1.0.0
@@ -118,6 +116,20 @@ executable eval
     , icfpc2022
     , mtl
     , optparse-applicative
+  default-language: Haskell2010
+
+executable gloss-display
+  main-is: Main.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      app/gloss
+  build-depends:
+      JuicyPixels
+    , base >=4.7 && <5
+    , containers
+    , icfpc2022
+    , mtl
   default-language: Haskell2010
 
 executable icfpc2022
