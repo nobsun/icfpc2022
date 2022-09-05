@@ -13,6 +13,7 @@ data Options
   = Options
   { optOutput :: Maybe FilePath
   , optInitialConfig :: Maybe FilePath
+  , optSourceImage :: Maybe FilePath
   , optTarget :: Maybe FilePath
   , optEvalEngine :: String
   , optInput :: FilePath
@@ -22,6 +23,7 @@ optionsParser :: Parser Options
 optionsParser = Options
   <$> outputOption
   <*> initialConfigOption
+  <*> sourceImageOption
   <*> targetOption
   <*> evalEngineOption
   <*> fileInput
@@ -34,6 +36,13 @@ optionsParser = Options
       $  short 'c'
       <> metavar "FILE"
       <> help "initial config"
+      <> showDefaultWith id
+
+    sourceImageOption :: Parser (Maybe FilePath)
+    sourceImageOption = optional $ strOption
+      $  short 's'
+      <> metavar "FILE"
+      <> help "source image filename"
       <> showDefaultWith id
 
     outputOption :: Parser (Maybe FilePath)
@@ -79,6 +88,13 @@ main = do
       Nothing -> return defaultInitialConfig
       Just fname -> loadInitialConfig fname
 
+  sourceImage <-
+    case optSourceImage opt of
+      Nothing -> return Nothing
+      Just fname -> do
+        Right (ImageRGBA8 img) <- readImage fname
+        return (Just img)
+
   targetImage <-
     case optTarget opt of
       Nothing -> do
@@ -91,7 +107,7 @@ main = do
 
   moves <- loadISL (optInput opt)
   (img, cost) <-
-    case eval initialConfig moves of
+    case eval initialConfig sourceImage moves of
       Left err -> fail err
       Right (img, cost) -> return (img, cost)
 
