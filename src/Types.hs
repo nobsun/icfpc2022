@@ -40,6 +40,17 @@ sameShape :: Shape -> Shape -> Bool
 sameShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11))
     = x01 - x00 == x11 - x10 && y01 -y00 == y11 - y10
 
+-- |
+-- >>> compatibleShape (Rectangle (0,0) (1,1)) (Rectangle (1,0) (2,1))
+-- True
+-- >>> compatibleShape (Rectangle (0,0) (1,1)) (Rectangle (1,1) (2,2))
+-- False
+-- >>> compatibleShape (Rectangle (0,0) (1,1)) (Rectangle (0,1) (1,2))
+-- True
+-- >>> compatibleShape (Rectangle (0,0) (1,1)) (Rectangle (-1,0) (0,1))
+-- True
+-- >>> compatibleShape (Rectangle (0,0) (1,1)) (Rectangle (0,-1) (1,0))
+-- True
 compatibleShape :: Shape -> Shape -> Bool
 compatibleShape (Rectangle (x00, y00) (x01, y01)) (Rectangle (x10, y10) (x11, y11))
     = or $ map and [ [ x00 == x10, y01 == y10, x01 == x11 ]
