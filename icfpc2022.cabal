@@ -72,6 +72,8 @@ executable average-color
     , containers
     , icfpc2022
     , mtl
+    , optparse-applicative
+    , vector
   default-language: Haskell2010
 
 executable compare-image

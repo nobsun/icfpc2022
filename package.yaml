@@ -68,6 +68,8 @@ executables:
     # - -with-rtsopts=-N
     dependencies:
     - icfpc2022
+    - optparse-applicative
+    - vector
   mosaic-color:
     main:                Main.hs
     source-dirs:         app/mosaic-color
