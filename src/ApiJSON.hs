@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module ApiJSON (
-  Submission (..), parseSubmissions, loadSubmissions,
+  Submission1 (..), parseSubmissions, loadSubmissions,
   Problem (..), parseProblems, loadProblems,
   ) where
 
@@ -16,31 +16,32 @@ import qualified Data.Aeson as JSON
 
 newtype Submissions =
   Submissions
-  { submissions :: [Submission] }
+  { submissions :: [Submission1] }
   deriving (Show, Generic)
 
 instance FromJSON Submissions
 
-data Submission =
-  Submission
-  { sub_id :: Int
-  , sub_problem_id :: Int
-  , sub_submitted_at :: String
-  , sub_status :: String
-  , sub_score :: Int
-  , sub_error :: String
+-- element type of submissions list
+data Submission1 =
+  Submission1
+  { sub1_id :: Int
+  , sub1_problem_id :: Int
+  , sub1_submitted_at :: String
+  , sub1_status :: String
+  , sub1_score :: Int
+  , sub1_error :: String
   }
   deriving (Show, Generic)
 
-instance FromJSON Submission where
-  parseJSON = genericParseJSON $ stripPrefixOptions "sub_"
+instance FromJSON Submission1 where
+  parseJSON = genericParseJSON $ stripPrefixOptions "sub1_"
 
 -- | parse output of api/list-submissions.sh
-parseSubmissions :: ByteString -> Either String [Submission]
+parseSubmissions :: ByteString -> Either String [Submission1]
 parseSubmissions = (submissions <$>) . JSON.eitherDecodeStrict'
 
 -- | load from file which content is output of api/list-submissions.sh
-loadSubmissions :: FilePath -> IO (Either String [Submission])
+loadSubmissions :: FilePath -> IO (Either String [Submission1])
 loadSubmissions = (parseSubmissions <$>) . BS.readFile
 
 
