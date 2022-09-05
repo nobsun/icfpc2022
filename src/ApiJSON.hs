@@ -2,6 +2,7 @@
 
 module ApiJSON (
   Submission1 (..), parseSubmissions, loadSubmissions,
+  Submission (..), loadSubmission,
   Problem (..), parseProblems, loadProblems,
   ) where
 
@@ -44,6 +45,26 @@ parseSubmissions = (submissions <$>) . JSON.eitherDecodeStrict'
 loadSubmissions :: FilePath -> IO (Either String [Submission1])
 loadSubmissions = (parseSubmissions <$>) . BS.readFile
 
+-- type for id-speficied submission
+data Submission =
+  Submission
+  { sub_id :: Int
+  , sub_problem_id :: Int
+  , sub_submitted_at :: String
+  , sub_status :: String
+  , sub_cost :: Int
+  , sub_error :: String
+  , sub_file_url :: String
+  }
+  deriving (Show, Generic)
+
+instance FromJSON Submission where
+  parseJSON = genericParseJSON $ stripPrefixOptions "sub_"
+
+loadSubmission :: FilePath -> IO (Either String Submission)
+loadSubmission = (JSON.eitherDecodeStrict' <$>) . BS.readFile
+
+---
 
 newtype Problems =
   Problems
