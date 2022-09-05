@@ -14,8 +14,9 @@ import ApiJSON (Problem (..), loadProblems)
 
 saveProblems :: IO ()
 saveProblems = do
-  executeCmd "./api/update-problems-list.sh" []
-  saveProblems_ "lists/problems.json"
+  let problemList = "lists/problems.json"
+  executeCmd "./api/update-problems-list.sh" [problemList]
+  saveProblems_ problemList
 
 saveProblems_ :: FilePath -> IO ()
 saveProblems_ = either fail (mapM_ saveProblem) <=< loadProblems
