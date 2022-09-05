@@ -2,7 +2,18 @@
 
 set -e
 
-output=lists/submissions.json
+usage() {
+    cat <<EOF
+$0 OUTPUT_FILE
+EOF
+}
+
+if [ x"$1" = x ]; then
+    usage
+    exit 0
+fi
+
+output=$1
 
 set -x
 
