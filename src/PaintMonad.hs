@@ -30,9 +30,9 @@ instance MonadFail E where
 
 type Paint = RWST Shape (Seq.Seq Move) Int E
 
-genMoves :: Shape -> Int -> Paint a -> ([Move], Int)
-genMoves shape cnt m =
-  case runRWST m shape cnt of
+genMoves :: InitialConfig -> ([BlockId] -> Paint a) -> ([Move], Int)
+genMoves config f =
+  case runRWST (f [icbBlockIdParsed block | block <- icBlocks config]) (Rectangle (0,0) (icWidth config, icHeight config)) (icCounter config) of
     E (Left err) -> error err
     E (Right (_, cnt', moves)) -> (F.toList moves, cnt')
 
@@ -116,9 +116,7 @@ sample_prob_2 = do
   -- writeFile "human_2.isl" (unlines (map show moves))
 
   where
-    (moves, cnt) = genMoves (Rectangle (0,0) (400,400)) 0 $ do
-      let block0 = V.singleton 0
-
+    (moves, cnt) = genMoves defaultInitialConfig $ \[block0] -> do
       -- 全体を縦に分割
       [_, bot, mid, top] <- lcutN block0 Y [50, 108, 265]
 
@@ -145,8 +143,9 @@ sample_prob_2 = do
 
       -- 青い頭
       mid_and_top <- fillRect mid_and_top (Rectangle (139,241) (258,360)) (0,74,173,255)
-      -- 口
+      -- 口 (顔を一部塗り潰す)
       mid_and_top <- fillRect mid_and_top (Rectangle (156,267) (240,290)) (92,225,230,255)
+      -- 顔の塗りつぶされた部分を塗り直す
       mid_and_top <- fillRect mid_and_top (Rectangle (175,282) (222,312)) (0,74,173,255)
       -- 左の緑の目
       mid_and_top <- fillRect mid_and_top (Rectangle (159,314) (177,335)) (126,217,87,255)
