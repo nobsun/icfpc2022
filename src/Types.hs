@@ -187,6 +187,10 @@ loadISL fname = do
   s <- readFile fname
   return [read l | l <- lines s, not ("#" `isPrefixOf` l)]
 
+saveISL :: FilePath -> [Move] -> IO ()
+saveISL fname moves = do
+  writeFile fname (unlines (map dispMove moves))
+
 -- ------------------------------------------------------------------------
 
 data InitialConfig
