@@ -65,7 +65,7 @@ initializeWorld can is
     , prog = is
     , counter = 1
     , blocks = Map.singleton (V.singleton 0)
-                 (SimpleBlock can gray)
+                 (SimpleBlock can white)
     , costs  = 0
     }
 
