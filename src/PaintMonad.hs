@@ -17,6 +17,9 @@ module PaintMonad
   , pmerge
   , focus
   , fillRect
+
+  , sample_problem_1
+  , sample_problem_2
   ) where
 
 import Control.Monad.RWS.Strict
@@ -89,9 +92,9 @@ lcut bid dir offset = do
 pcut :: BlockId -> Point -> Paint (BlockId, BlockId, BlockId, BlockId)
 pcut bid point@(x1,y1) = do
   let move = PCUT bid point
-  Rectangle (x0,y0) (x2,y2) <- getBlockShape bid
-  unless (x0 <= x1 && x1 <= x2 && y0 <= y1 && y1 <= y2) $
-    fail ("invalid move (" ++ dispMove move ++ "): " ++ show (x1,y1) ++ " not in " ++ show ((x0,y0),(x2,y2)))
+  shape@(Rectangle (x0,y0) (x2,y2)) <- getBlockShape bid
+  unless (x0 < x1 && x1 < x2 && y0 < y1 && y1 < y2) $
+    fail ("invalid move (" ++ dispMove move ++ "): " ++ show (x1,y1) ++ " not in " ++ show shape)
   modifyBlocks $
     Map.insert (V.snoc bid 0) (Rectangle (x0, y0) (x1, y1)) .
     Map.insert (V.snoc bid 1) (Rectangle (x1, y0) (x2, y1)) .
@@ -103,12 +106,12 @@ pcut bid point@(x1,y1) = do
 
 lcutRel :: BlockId -> Orientation -> Int -> Paint (BlockId, BlockId)
 lcutRel bid dir offset = do
-  Rectangle (x,y) _ <- ask
-  lcut bid dir (if dir == X then x + offset else y + offset)
+  Rectangle (x0,y0) _ <- getBlockShape bid
+  lcut bid dir (if dir == X then x0 + offset else y0 + offset)
 
 pcutRel :: BlockId -> Point -> Paint (BlockId, BlockId, BlockId, BlockId)
 pcutRel bid (x,y) = do
-  Rectangle (x0,y0) _ <- ask
+  Rectangle (x0,y0) _ <- getBlockShape bid
   pcut bid (x0+x, y0+y)
 
 lcutN :: BlockId -> Orientation -> [Int] -> Paint [BlockId]
@@ -180,10 +183,57 @@ fillRect bid rect c =
     return bid'
 
 
-sample_prob_2 = do
-  mapM_ print moves
-  -- writeFile "human_2.isl" (unlines (map show moves))
+sample_problem_1 = moves
+  where
+    (moves, cnt) = genMoves defaultInitialConfig $ \[block0] -> do
+      let blue = (0,74,173,255)
+          black = (0,0,0,255)
+          white = (255,255,255,255)
 
+      color block0 blue
+      (b0bl, b0br, b0tr, b1) <- pcut block0 (40*9,40*1)
+      (b1bl, b1br, b1tr, b1tl) <- pcut b1 (40*8,40*2)
+
+      let cb88 blk = do
+            color blk black
+            (b1,b2,b3,b4) <- pcutRel blk (40*4,40*4)
+            mapM_ cb44 [b1, b2, b3, b4]
+          cb44 blk = do
+            (b1,b2,b3,b4) <- pcutRel blk (40*2,40*2)
+            mapM_ cb22 [b1, b2, b3, b4]
+          cb22 blk = do
+            (b1,b2,b3,b4) <- pcutRel blk (40,40)
+            color b2 white
+            color b4 white
+      cb88 b1tl
+
+      let g8 blk = do
+            color blk black
+            (bb, bt) <- lcutRel blk Y (40*4)
+            mapM_ g4 [bb, bt]
+          g4 blk = do
+            (bb, bt) <- lcutRel blk Y (40*2)
+            mapM_ g2 [bb, bt]
+          g2 blk = do
+            (_, bt) <- lcutRel blk Y 40
+            color bt white
+      g8 b1tr
+
+      let h8 blk = do
+            color blk black
+            (bl, br) <- lcutRel blk X (40*4)
+            mapM_ h4 [bl, br]
+          h4 blk = do
+            (bl, br) <- lcutRel blk X (40*2)
+            mapM_ h2 [bl, br]
+          h2 blk = do
+            (bl, _) <- lcutRel blk X 40
+            color bl white
+      h8 b1bl
+
+      return ()
+
+sample_problem_2 = moves
   where
     (moves, cnt) = genMoves defaultInitialConfig $ \[block0] -> do
       -- 全体を縦に分割
