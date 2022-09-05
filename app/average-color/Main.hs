@@ -1,9 +1,13 @@
 module Main where
 
 import Codec.Picture
+import Control.Monad
+import Control.Monad.ST
 import Data.List
 import Options.Applicative
-import System.Environment
+import qualified Data.Vector.Unboxed.Mutable as VUM
+
+import Types
 
 
 data Options
@@ -34,18 +38,23 @@ parserInfo = info (optionsParser <**> helper)
   <> header "average-color - simplest solver"
 
 
-averageColor :: Image PixelRGBA8 -> PixelRGBA8
-averageColor img = p
-  where
-    p = (\(r,g,b,a) -> PixelRGBA8 (round (r/n)) (round (g/n)) (round (b/n)) (round (a/n))) $
-        foldl' (\(r1,g1,b1,a1) (r2,g2,b2,a2) -> ((((,,,) $! (r1+r2)) $! (g1+g2)) $! (b1+b2)) $! (a1+a2))
-          (0 :: Double, 0 :: Double, 0 :: Double, 0 :: Double)
-          [ (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
-          | y <- [0 .. imageHeight img - 1]
-          , x <- [0 .. imageWidth img - 1]
-          , let PixelRGBA8 r g b a = pixelAt img x y
-          ]
-    n = fromIntegral (imageHeight img) * fromIntegral (imageWidth img)
+averageColor :: Image PixelRGBA8 -> Shape -> PixelRGBA8
+averageColor img (Rectangle (x1,y1) (x2,y2)) = runST $ do
+  vec <- VUM.replicate 4 (0.0 :: Double)
+  forM_ [y1..y2-1] $ \y -> do
+    forM_ [x1..x2-1] $ \x -> do
+      let PixelRGBA8 r g b a = pixelAt img x (imageHeight img - 1 - y)
+      VUM.modify vec (+ fromIntegral r) 0
+      VUM.modify vec (+ fromIntegral g) 1
+      VUM.modify vec (+ fromIntegral b) 2
+      VUM.modify vec (+ fromIntegral a) 3
+  rSum <- VUM.read vec 0
+  gSum <- VUM.read vec 1
+  bSum <- VUM.read vec 2
+  aSum <- VUM.read vec 3
+  let n = fromIntegral ((y2 - y1) * (x2 - x1))
+      f x = round (x / n)
+  return (PixelRGBA8 (f rSum) (f gSum) (f bSum) (f aSum))
 
 
 main :: IO ()
@@ -53,5 +62,13 @@ main = do
   opt <- execParser parserInfo
 
   Right (ImageRGBA8 img) <- readImage (optInput opt)
-  let PixelRGBA8 r g b a = averageColor img
-  putStrLn $ "color [0] " ++ show [r,g,b,a]
+
+  config <-
+    case optInitialConfig opt of
+      Nothing -> return defaultInitialConfig
+      Just fname -> loadInitialConfig fname
+
+  forM_ (icBlocks config) $ \block -> do
+    let bid = icbBlockIdParsed block
+        PixelRGBA8 r g b a = averageColor img (Rectangle (icbBottomLeft block) (icbTopRight block))
+    putStrLn $ dispMove $ COLOR bid (fromIntegral r, fromIntegral g, fromIntegral b, fromIntegral a)
