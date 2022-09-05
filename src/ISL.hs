@@ -30,11 +30,11 @@ interp mv world = case mv of
     MERGE bid1 bid2 -> mergemove bid1 bid2 world
 
 {- | lcut : Line Cut Move instruction 
->>> lcut (V.fromList [0] :: BlockId) X 100 initialWorld
+>>> lcut (V.fromList [0] :: BlockId) X 100 sampleWorld
 [0.0]: Rectangle {leftBottom = (0,0), rightUpper = (100,400)} [255,255,255,255] size: 40000
 [0.1]: Rectangle {leftBottom = (100,0), rightUpper = (400,400)} [255,255,255,255] size: 120000
 <BLANKLINE>
->>> lcut (V.fromList [0] :: BlockId) Y 100 initialWorld
+>>> lcut (V.fromList [0] :: BlockId) Y 100 sampleWorld
 [0.0]: Rectangle {leftBottom = (0,0), rightUpper = (400,100)} [255,255,255,255] size: 40000
 [0.1]: Rectangle {leftBottom = (0,100), rightUpper = (400,400)} [255,255,255,255] size: 120000
 <BLANKLINE>
@@ -73,7 +73,7 @@ lcut bid o off world = case world of
 >>> import Control.Arrow
 >>> bs  = map (first V.fromList) [([1], SimpleBlock (Rectangle (0,0) (40, 50)) green), ([2], SimpleBlock (Rectangle (0,50) (40, 400)) red), ([3], SimpleBlock (Rectangle (40,0) (400, 400)) white)]
 >>> tbl = foldr (uncurry Map.insert) Map.empty bs
->>> world0 = initialWorld
+>>> world0 = sampleWorld
 >>> world1 = world0 { blocks = tbl }
 >>> world1
 [1]: Rectangle {leftBottom = (0,0), rightUpper = (40,50)} [0,255,0,255] size: 2000

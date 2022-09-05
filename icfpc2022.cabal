@@ -199,6 +199,21 @@ executable mosaic-color
     , mtl
   default-language: Haskell2010
 
+executable pngview
+  main-is: Main.hs
+  other-modules:
+      Paths_icfpc2022
+  hs-source-dirs:
+      app/gloss/pngview
+  build-depends:
+      JuicyPixels
+    , base >=4.7 && <5
+    , containers
+    , gloss
+    , gloss-juicy
+    , mtl
+  default-language: Haskell2010
+
 executable save-problems
   main-is: save-problems.hs
   other-modules:

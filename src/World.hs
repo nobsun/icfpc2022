@@ -37,10 +37,25 @@ initializeWorld can tab is
     { canvas = can
     , prog = is
     , counter = 1
-    , blocks = tab -- Map.singleton (V.singleton 0) (SimpleBlock can white)
+    , blocks = tab
     , picture = undefined
     , costs  = 0
     }
+
+sampleWorld :: World
+sampleWorld = initializeWorld sampleCanvas sampleBlockTable []
+
+sampleBlockTable :: BlockTable
+sampleBlockTable = Map.singleton (V.singleton 0) sampleBlock
+
+sampleCanvas :: Canvas
+sampleCanvas = Rectangle (0,0) (400,400)
+
+sampleBlock :: Block
+sampleBlock = SimpleBlock sampleShape white
+
+sampleShape :: Shape
+sampleShape = Rectangle (0,0) (400,400)
 
 white :: Color
 white = (255,255,255,255)
@@ -65,7 +80,7 @@ glossDisplayWorld pict world
     $ Gloss.translate dx dy $ foldr1 (<>) $ map blockToGlossPicture $ Map.elems $ blocks world
     }
     where
-        window = Gloss.FullScreen
+        window = Gloss.InWindow "ICFP 2022" (960,960) (1500,400) -- Gloss.FullScreen
         can   = canvas world
         (dx,dy) = ( fromIntegral $ negate $ halve $ shapeWidth can
                   , fromIntegral $ negate $ halve $ shapeHeight can
