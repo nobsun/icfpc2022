@@ -2,6 +2,9 @@
 module PaintMonad
   ( genMoves
 
+  , getBlockShape
+
+  , emitMove
   , lcut
   , pcut
   , lcutRel
@@ -17,6 +20,8 @@ module PaintMonad
   ) where
 
 import Control.Monad.RWS.Strict
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 import qualified Data.Foldable as F
 import qualified Data.Sequence as Seq
 import qualified Data.Vector.Generic as V
@@ -28,25 +33,72 @@ newtype E a = E (Either String a) deriving (Functor, Applicative, Monad)
 instance MonadFail E where
   fail s = E (Left s)
 
-type Paint = RWST Shape (Seq.Seq Move) Int E
+type Paint = RWST Shape (Seq.Seq Move) (Int, Map BlockId Shape) E
 
 genMoves :: InitialConfig -> ([BlockId] -> Paint a) -> ([Move], Int)
 genMoves config f =
-  case runRWST (f [icbBlockIdParsed block | block <- icBlocks config]) (Rectangle (0,0) (icWidth config, icHeight config)) (icCounter config) of
+  case runRWST (f [icbBlockIdParsed block | block <- icBlocks config]) r0 s0 of
     E (Left err) -> error err
-    E (Right (_, cnt', moves)) -> (F.toList moves, cnt')
+    E (Right (_, (cnt', _), moves)) -> (F.toList moves, cnt')
+  where
+    r0 = Rectangle (0,0) (icWidth config, icHeight config)
+    s0 =
+      ( icCounter config
+      , Map.fromList [(icbBlockIdParsed block, icbShape block) | block <- icBlocks config]
+      )
+
+getBlockShape :: BlockId -> Paint Shape
+getBlockShape bid = do
+  (_, m) <- get
+  case Map.lookup bid m of
+    Nothing -> fail ("no such block: " ++ show bid)
+    Just s -> return s
+
+modifyBlocks :: (Map BlockId Shape -> Map BlockId Shape) -> Paint ()
+modifyBlocks f = modify g
+  where
+    g (cnt, m) = seq m' (cnt, m')
+      where
+        m' = f m
 
 emitMove :: Move -> Paint ()
 emitMove move = tell (Seq.singleton move)
 
 lcut :: BlockId -> Orientation -> Int -> Paint (BlockId, BlockId)
 lcut bid dir offset = do
-  emitMove $ LCUT bid dir offset
+  let move = LCUT bid dir offset
+  Rectangle (x1,y1) (x2,y2) <- getBlockShape bid
+  case dir of
+    X -> do
+      unless (x1 <= offset && offset <= x2) $
+        fail ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show x1 ++ ".." ++ show x2)
+      modifyBlocks $
+        Map.insert (V.snoc bid 0) (Rectangle (x1,y1) (offset,y2)) .
+        Map.insert (V.snoc bid 1) (Rectangle (offset,y1) (x2,y2)) .
+        Map.delete bid
+    Y -> do
+      unless (y1 <= offset && offset <= y2) $
+        fail ("invalid move (" ++ dispMove move ++ "): " ++ show offset ++ " not in " ++ show y1 ++ ".." ++ show y2)
+      modifyBlocks $
+        Map.insert (V.snoc bid 0) (Rectangle (x1,y1) (x2,offset)) .
+        Map.insert (V.snoc bid 1) (Rectangle (x1,offset) (x2,y2)) .
+        Map.delete bid
+  emitMove move
   return (V.snoc bid 0, V.snoc bid 1)
 
 pcut :: BlockId -> Point -> Paint (BlockId, BlockId, BlockId, BlockId)
-pcut bid point = do
-  emitMove $ PCUT bid point
+pcut bid point@(x1,y1) = do
+  let move = PCUT bid point
+  Rectangle (x0,y0) (x2,y2) <- getBlockShape bid
+  unless (x0 <= x1 && x1 <= x2 && y0 <= y1 && y1 <= y2) $
+    fail ("invalid move (" ++ dispMove move ++ "): " ++ show (x1,y1) ++ " not in " ++ show ((x0,y0),(x2,y2)))
+  modifyBlocks $
+    Map.insert (V.snoc bid 0) (Rectangle (x0, y0) (x1, y1)) .
+    Map.insert (V.snoc bid 1) (Rectangle (x1, y0) (x2, y1)) .
+    Map.insert (V.snoc bid 2) (Rectangle (x1, y1) (x2, y2)) .
+    Map.insert (V.snoc bid 3) (Rectangle (x0, y1) (x1, y2)) .
+    Map.delete bid
+  emitMove move
   return (V.snoc bid 0, V.snoc bid 1, V.snoc bid 2, V.snoc bid 3)
 
 lcutRel :: BlockId -> Orientation -> Int -> Paint (BlockId, BlockId)
@@ -67,17 +119,34 @@ lcutN bid dir (x : xs) = do
   return (b1 : bs)
 
 color :: BlockId -> Color -> Paint ()
-color bid color = emitMove $ COLOR bid color
+color bid color = do
+  _ <- getBlockShape bid
+  emitMove $ COLOR bid color
 
 swap :: BlockId -> BlockId -> Paint ()
-swap bid1 bid2 = emitMove $ SWAP bid1 bid2
+swap bid1 bid2 = do
+  s1 <- getBlockShape bid1
+  s2 <- getBlockShape bid1
+  modifyBlocks $ Map.insert bid1 s2 . Map.insert bid2 s1
+  emitMove $ SWAP bid1 bid2
 
 merge :: BlockId -> BlockId -> Paint BlockId
 merge bid1 bid2 = do
-  emitMove $ MERGE bid1 bid2
-  n <- get
-  put $! n+1
-  return (V.singleton (n+1))
+  let move = MERGE bid1 bid2
+  s1 <- getBlockShape bid1
+  s2 <- getBlockShape bid2
+  case mergeShape s1 s2 of
+    Nothing -> fail ("invalid move (" ++ dispMove move ++ "): (" ++ show s1 ++ "), (" ++ show s2 ++ ")")
+    Just s3 -> do
+      (n, blocks) <- get
+      put (n+1, blocks)
+      let bid3 = V.singleton (n+1)
+      modifyBlocks $
+        Map.delete bid1 .
+        Map.delete bid2 .
+        Map.insert bid3 s3
+      emitMove move
+      return (V.singleton (n+1))
 
 mergeN :: [BlockId] -> Paint BlockId
 mergeN [] = undefined
