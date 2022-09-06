@@ -2,9 +2,9 @@ name:                icfpc2022
 version:             0.1.0.0
 github:              "nobsun/icfpc2022"
 license:             BSD3
-author:              "Nobuo Yamashita"
-maintainer:          "nobsun@sampou.org"
-copyright:           "Copyright: (c) 2022 Nobuo Yamashita"
+author:              "Team Sampou"
+maintainer:          "icfpc2022@reasoning.tokyo"
+copyright:           "Copyright: (c) 2022 Team Sampou"
 
 extra-source-files:
 - README.md

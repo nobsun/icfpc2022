@@ -9,9 +9,9 @@ version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/nobsun/icfpc2022#readme>
 homepage:       https://github.com/nobsun/icfpc2022#readme
 bug-reports:    https://github.com/nobsun/icfpc2022/issues
-author:         Nobuo Yamashita
-maintainer:     nobsun@sampou.org
-copyright:      Copyright: (c) 2022 Nobuo Yamashita
+author:         Team Sampou
+maintainer:     icfpc2022@reasoning.tokyo
+copyright:      Copyright: (c) 2022 Team Sampou
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
