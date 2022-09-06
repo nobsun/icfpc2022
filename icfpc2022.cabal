@@ -18,6 +18,19 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
+    api/getinfo-results.sh
+    api/getinfo-submission.sh
+    api/getinfo-team.sh
+    api/list-problems.sh
+    api/list-submissions.sh
+    api/save-submission-info.sh
+    api/save-url.sh
+    api/submit.sh
+    api/trace-get.sh
+    api/update-problems-list.sh
+    api/update-submissions-list.sh
+    api/lib
+    api/README
 
 source-repository head
   type: git

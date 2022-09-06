@@ -9,6 +9,9 @@ copyright:           "Copyright: (c) 2022 Nobuo Yamashita"
 extra-source-files:
 - README.md
 - ChangeLog.md
+- api/*.sh
+- api/lib
+- api/README
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
