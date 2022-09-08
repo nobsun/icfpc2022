@@ -87,5 +87,5 @@ renderContentM img = f
       forM_ [y1 .. y1 + h - 1] $ \y -> do
         forM_ [x1 .. x1 + w - 1] $ \x -> do
           writePixel img x (mutableImageHeight img - 1 - y) px
-    f x1 y1 (HMerge s l r) = f x1 y1 l >> f (x1 + s) y1 r
-    f x1 y1 (VMerge s b t) = f x1 y1 b >> f x1 (y1 + s) t
+    f x1 y1 (HMerge _ l r) = f x1 y1 l >> f (contentWidth l + x1) y1 r
+    f x1 y1 (VMerge _ b t) = f x1 y1 b >> f x1 (contentHeight b + y1) t
