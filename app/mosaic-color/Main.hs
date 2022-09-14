@@ -9,6 +9,7 @@ import Control.Monad.State.Lazy
 import qualified Data.Map.Lazy as Map
 
 import Oga
+import Types (pixelAtBT)
 
 --import Debug.Trace
 --f $$ x = traceShow x (f x)
@@ -21,7 +22,7 @@ distance (PixelRGBA8 r1 g1 b1 a1) (PixelRGBA8 r2 g2 b2 a2) =
 
 pixelBoxAt :: (Int,Int) -> Int -> Image PixelRGBA8 -> [[Int]]
 pixelBoxAt (x,y) size img =
-  transpose $ map h [pixelAt img i (399-j)| i<-[x..x+size-1], j<-[y..y+size-1]]
+  transpose $ map h [pixelAtBT img i j| i<-[x..x+size-1], j<-[y..y+size-1]]
   where
     h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
 
@@ -44,10 +45,10 @@ mosaic2S depth img bid = do
   B{bBlocks=bBlocks} <- get
   let ((bx,by),(tx,ty)) = bBlocks Map.! bid
       (mx,my) = ((bx+tx)`div`2, (by+ty)`div`2)
-      dbx = distance (pixelAt img bx (399-by)) (pixelAt img tx (399-by))
-      dtx = distance (pixelAt img tx (399-ty)) (pixelAt img bx (399-ty))
-      dby = distance (pixelAt img bx (399-by)) (pixelAt img bx (399-ty))
-      dty = distance (pixelAt img tx (399-ty)) (pixelAt img tx (399-by))
+      dbx = distance (pixelAtBT img bx by) (pixelAtBT img tx by)
+      dtx = distance (pixelAtBT img tx ty) (pixelAtBT img bx ty)
+      dby = distance (pixelAtBT img bx by) (pixelAtBT img bx ty)
+      dty = distance (pixelAtBT img tx ty) (pixelAtBT img tx by)
       vcut = depth>0 && mx/=bx && mx/=tx && (depth>7 || dbx > th || dtx > th)
       hcut = depth>0 && my/=by && my/=ty && (depth>7 || dby > th || dty > th)
   case (vcut, hcut) of
