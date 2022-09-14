@@ -15,7 +15,7 @@ import Codec.Picture.Types
 import Control.Monad
 import Control.Monad.Primitive
 
-import Types (Color)
+import Types (Color, writePixelBT)
 
 
 data Content
@@ -86,6 +86,6 @@ renderContentM img = f
       let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
       forM_ [y1 .. y1 + h - 1] $ \y -> do
         forM_ [x1 .. x1 + w - 1] $ \x -> do
-          writePixel img x (mutableImageHeight img - 1 - y) px
+          writePixelBT img x y px
     f x1 y1 (HMerge _ l r) = f x1 y1 l >> f (contentWidth l + x1) y1 r
     f x1 y1 (VMerge _ b t) = f x1 y1 b >> f x1 (contentHeight b + y1) t
