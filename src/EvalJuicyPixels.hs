@@ -60,15 +60,15 @@ initializeImage config src = do
            let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
            forM_ [y1..y2-1] $ \y -> do
              forM_ [x1..x2-1] $ \x -> do
-               writePixel img x (mutableImageHeight img - 1 - y) px
+               writePixelBT img x y px
        | Just (x3,y3) <- icbPngBottomLeftPoint block -> do
            case src of
              Nothing -> error "pngBottomLeftPoint requires source image"
              Just src' -> do
                forM_ [y1..y2-1] $ \y -> do
                  forM_ [x1..x2-1] $ \x -> do
-                   let px = pixelAt src' (x3 + x) (imageHeight src' - 1 - (y3 + y))
-                   writePixel img x (mutableImageHeight img - 1 - y) px
+                   let px = pixelAtBT src' (x3 + x) (y3 + y)
+                   writePixelBT img x y px
        | otherwise -> error "no color or pngBottomLeftPoint found"
   return img
 
@@ -95,7 +95,7 @@ evalMoveM move@(COLOR bid (r,g,b,a)) = do
   let px = PixelRGBA8 (fromIntegral r) (fromIntegral g) (fromIntegral b) (fromIntegral a)
   forM_ [y..y1-1] $ \y' -> do
     forM_ [x..x1-1] $ \x' -> do
-      writePixel img x' (mutableImageHeight img - 1 - y') px
+      writePixelBT img x' y' px
   canvasSize <- getCanvasSize
   addCost $ baseCost config move * canvasSize / fromIntegral (shapeSize shape)
 evalMoveM move@(LCUT bid orientation offset) = do
@@ -150,10 +150,10 @@ evalMoveM move@(SWAP bid1 bid2) = do
     throwError ("invalid move (" ++ dispMove move ++ "): " ++ show (shapeWidth shape1, shapeHeight shape1) ++ " /= " ++ show (shapeWidth shape2, shapeHeight shape2))
   forM_ [0 .. shapeHeight shape1 - 1] $ \i -> do
     forM_ [0 .. shapeWidth shape1 - 1] $ \j -> do
-      px1 <- readPixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i))
-      px2 <- readPixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i))
-      writePixel img (x1 + j) (mutableImageHeight img - 1 - (y1 + i)) px2
-      writePixel img (x2 + j) (mutableImageHeight img - 1 - (y2 + i)) px1
+      px1 <- readPixelBT img (x1 + j) (y1 + i)
+      px2 <- readPixelBT img (x2 + j) (y2 + i)
+      writePixelBT img (x1 + j) (y1 + i) px2
+      writePixelBT img (x2 + j) (y2 + i) px1
   put $
     ( cnt
     , Map.insert bid2 shape1 $ Map.insert bid1 shape2 $ blocks

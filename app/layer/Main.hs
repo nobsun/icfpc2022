@@ -11,6 +11,7 @@ import Data.Foldable (foldlM)
 import qualified Data.Map.Lazy as Map
 
 import Oga
+import Types (pixelAtBT, readPixelBT)
 
 --import Debug.Trace
 --f $$ x = traceShow x (f x)
@@ -28,8 +29,8 @@ layerS threshold img bid y = do
   B{bBlocks=bBlocks,bImage=bimg} <- get
   let ((bx,by),(tx,ty)) = bBlocks Map.! bid
   bid' <- foldlM (\bid' x -> do
-      let color1 = pixelAt img x (399-y)
-      color2 <- readPixel bimg x (399-y)
+      let color1 = pixelAtBT img x y
+      color2 <- readPixelBT bimg x y
       if distance color1 color2 > (400`div`(y+1))*threshold then paint bid' x color1 else return bid'
     ) bid [bx..tx]
   programLineS(Move (LCutMove (BlockId bid') Horizontal (LineNumber y)))

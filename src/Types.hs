@@ -8,8 +8,10 @@ module Types where
 
 import GHC.Generics (Generic)
 import Codec.Picture
+import Codec.Picture.Types
 import Control.Exception (assert)
 import Control.Monad
+import Control.Monad.Primitive
 import Data.Aeson (FromJSON, ToJSON, genericParseJSON, genericToJSON, defaultOptions, Options (..))
 import qualified Data.Aeson as JSON
 import Data.Char
@@ -285,6 +287,18 @@ baseCost config
          PCUT _ _ -> 10
          SWAP _ _ -> 3
          MERGE _ _ -> 1
+
+-- ------------------------------------------------------------------------
+-- Variants of juicy pixel operations with bottom-to-top coordinate system
+
+pixelAtBT :: Pixel a => Image a -> Int -> Int -> a
+pixelAtBT img x y = pixelAt img x (imageHeight img - 1 - y)
+
+writePixelBT :: (Pixel a, PrimMonad m) => MutableImage (PrimState m) a -> Int -> Int -> a -> m ()
+writePixelBT img x y px = writePixel img x (mutableImageHeight img - 1 - y) px
+
+readPixelBT :: (Pixel a, PrimMonad m) => MutableImage (PrimState m) a -> Int -> Int -> m a
+readPixelBT img x y = readPixel img x (mutableImageHeight img - 1 - y)
 
 -- ------------------------------------------------------------------------
 

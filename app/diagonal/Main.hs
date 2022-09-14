@@ -14,6 +14,7 @@ import qualified Data.Map.Lazy as Map
 import Debug.Trace
 
 import Oga
+import Types (pixelAtBT, readPixelBT)
 
 distance :: Integral a => [a] -> [a] -> Int
 distance xs ys =
@@ -24,13 +25,13 @@ distance xs ys =
 
 pixelBoxAt :: (Int,Int) -> Int -> Image PixelRGBA8 -> [[Int]]
 pixelBoxAt (x,y) size img =
-  transpose $ map h [pixelAt img i (399-j)| i<-[x..x+size-1], j<-[y..y+size-1]]
+  transpose $ map h [pixelAtBT img i j| i<-[x..x+size-1], j<-[y..y+size-1]]
   where
     h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
 
 --readPixelBox :: (Int,Int) -> Int ->  MutableImage RealWorld PixelRGBA8 -> BState [[Int]]
 readPixelBox (x,y) size bimg =
-  fmap (transpose.map h) $ sequence[readPixel bimg i (399-j)| i<-[x..x+size-1], j<-[y..y+size-1]]
+  fmap (transpose.map h) $ sequence[readPixelBT bimg i j| i<-[x..x+size-1], j<-[y..y+size-1]]
   where
     h (PixelRGBA8 r g b a) = [fromIntegral r, fromIntegral g, fromIntegral b]
 
