@@ -45,7 +45,6 @@ library
       EvalContent
       EvalJuicyPixels
       ISL
-      Lib
       Oga
       PaintMonad
       PaintMonad.Samples
@@ -167,21 +166,6 @@ executable gloss-display
     , mtl
   default-language: Haskell2010
 
-executable icfpc2022
-  main-is: Main.hs
-  other-modules:
-      Paths_icfpc2022
-  hs-source-dirs:
-      app
-  ghc-options: -rtsopts
-  build-depends:
-      JuicyPixels
-    , base >=4.7 && <5
-    , containers
-    , icfpc2022
-    , mtl
-  default-language: Haskell2010
-
 executable layer
   main-is: Main.hs
   other-modules:
@@ -259,7 +243,6 @@ test-suite icfpc2022-doctest
   type: exitcode-stdio-1.0
   main-is: doctests.hs
   other-modules:
-      LibSpec
       Paths_icfpc2022
   hs-source-dirs:
       test
@@ -281,7 +264,6 @@ test-suite icfpc2022-test
   type: exitcode-stdio-1.0
   main-is: spec.hs
   other-modules:
-      LibSpec
       Paths_icfpc2022
   hs-source-dirs:
       test

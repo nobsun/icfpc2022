@@ -43,15 +43,6 @@ library:
   - primitive
 
 executables:
-  icfpc2022:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -rtsopts
-    # - -threaded
-    # - -with-rtsopts=-N
-    dependencies:
-    - icfpc2022
   save-problems:
     main:               save-problems.hs
     source-dirs:        api-util
